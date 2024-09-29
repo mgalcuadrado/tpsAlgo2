@@ -85,5 +85,17 @@ func (lista *listaEnlazada[T]) VerUltimo() T {
 func (lista *listaEnlazada[T]) Largo() int{
 	return lista.largo
 }
-	//Iterar(visitar func(T) bool)
+func (lista *listaEnlazada[T]) Iterar(visitar func(T) bool) {
+	actual := lista.primero
+
+	for actual != nil {
+		if !visitar(actual.dato) {
+			return
+		}
+		actual = actual.siguiente
+	}
+
+	return
+}
+
 	//Iterador() IteradorLista[T]
