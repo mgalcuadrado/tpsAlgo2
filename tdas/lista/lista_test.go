@@ -226,3 +226,15 @@ func TestVerMixeadoDiezElementos(t * testing.T) {
 	}
 	require.True(t, lista.EstaVacia())
 }
+
+func TestIterarInternoPocosElementos(t * testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i:= 1; i <= 10; i++ {
+		lista.InsertarPrimero(i)
+	}
+	lista.Iterar(func MostrarValor(v int) bool{
+		fmt.Println(v)
+		return true
+	})
+
+}
