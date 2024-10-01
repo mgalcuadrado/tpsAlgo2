@@ -2,20 +2,20 @@ package lista
 
 /* **************** DEFINICIÓN DE VARIABLES **************** */
 const (
-	_MENSAJE_PANIC_LISTA_VACIA                 string = "La lista esta vacia"
+	_MENSAJE_PANIC_LISTA_VACIA string = "La lista esta vacia"
 )
 
 /* **************** DEFINICIÓN DEL STRUCT NODO PROPORCIONADO POR LA CÁTEDRA **************** */
 type nodoLista[T any] struct {
-    dato      T
-    siguiente *nodoLista[T]
+	dato      T
+	siguiente *nodoLista[T]
 }
 
 /* **************** DEFINICIÓN DEL STRUCT LISTA PROPORCIONADO POR LA CÁTEDRA **************** */
 type listaEnlazada[T any] struct {
-    primero *nodoLista[T]
-    ultimo  *nodoLista[T]
-    largo   int
+	primero *nodoLista[T]
+	ultimo  *nodoLista[T]
+	largo   int
 }
 
 func CrearListaEnlazada[T any]() Lista[T] {
@@ -39,7 +39,7 @@ func (lista *listaEnlazada[T]) InsertarPrimero(valor T) {
 	nodoNuevo.siguiente = lista.primero
 	if lista.primero == nil {
 		lista.ultimo = nodoNuevo
-	} 
+	}
 	lista.primero = nodoNuevo
 	lista.largo++
 }
@@ -59,7 +59,7 @@ func (lista *listaEnlazada[T]) InsertarUltimo(valor T) {
 }
 
 func (lista *listaEnlazada[T]) BorrarPrimero() T {
-	if (lista.EstaVacia()){
+	if lista.EstaVacia() {
 		panic(_MENSAJE_PANIC_LISTA_VACIA)
 	}
 	prim := lista.primero
@@ -69,20 +69,20 @@ func (lista *listaEnlazada[T]) BorrarPrimero() T {
 }
 
 func (lista *listaEnlazada[T]) VerPrimero() T {
-	if (lista.EstaVacia()){
+	if lista.EstaVacia() {
 		panic(_MENSAJE_PANIC_LISTA_VACIA)
 	}
 	return lista.primero.dato
 }
 
 func (lista *listaEnlazada[T]) VerUltimo() T {
-	if (lista.EstaVacia()){
+	if lista.EstaVacia() {
 		panic(_MENSAJE_PANIC_LISTA_VACIA)
 	}
 	return lista.ultimo.dato
 }
 
-func (lista *listaEnlazada[T]) Largo() int{
+func (lista *listaEnlazada[T]) Largo() int {
 	return lista.largo
 }
 func (lista *listaEnlazada[T]) Iterar(visitar func(T) bool) {
@@ -94,8 +94,59 @@ func (lista *listaEnlazada[T]) Iterar(visitar func(T) bool) {
 		}
 		actual = actual.siguiente
 	}
-
-	return
 }
 
-	//Iterador() IteradorLista[T]
+/* **************** DEFINICIÓN DE LA LINTERFAZ ITERADOR LISTA (EXTERNO)**************** */
+type IteradorLista[T any] struct {
+	actual   *nodoLista[T]
+	anterior *nodoLista[T]
+	lista    *listaEnlazada[T]
+}
+
+func (lista *listaEnlazada[T]) Iterador() *IteradorLista[T] {
+	return &IteradorLista[T]{actual: lista.primero}
+}
+
+func (it *IteradorLista[T]) HaySiguiente() bool {
+	return it.actual != nil
+}
+
+func (it *IteradorLista[T]) VerActual() T {
+	return it.actual.dato
+}
+
+func (it *IteradorLista[T]) Siguiente() {
+	it.actual = it.actual.siguiente
+}
+
+func (it *IteradorLista[T]) Insertar(dato T) {
+	nuevoNodo := &nodoLista[T]{dato: dato}
+
+	if it.anterior == nil {
+		nuevoNodo.siguiente = it.lista.primero
+		it.lista.primero = nuevoNodo
+	} else {
+		nuevoNodo.siguiente = it.actual
+		it.anterior.siguiente = nuevoNodo
+	}
+
+	if it.anterior != nil {
+		it.anterior = nuevoNodo
+	}
+
+}
+
+func (it *IteradorLista[T]) Borrar(dato T) {
+	if it.actual == nil {
+		return
+	}
+
+	if it.actual == it.lista.primero {
+		it.lista.primero = it.actual.siguiente
+	} else {
+		it.anterior.siguiente = it.actual.siguiente
+	}
+
+	it.actual = it.actual.siguiente
+
+}
