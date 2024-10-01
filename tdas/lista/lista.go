@@ -27,10 +27,7 @@ type Lista[T any] interface {
 	// Si la lista está vacía devuelve 0
 	Largo() int
 
-/*	
-	//Iterar(visitar func(T) bool)
-	
-	
-	//Iterador() IteradorLista[T]
-*/
+	Iterar(visitar func(T) bool)
+
+	Iterador() *IteradorLista[T]
 }
