@@ -112,10 +112,16 @@ func (it *IteradorLista[T]) HaySiguiente() bool {
 }
 
 func (it *IteradorLista[T]) VerActual() T {
+	if it.actual == nil {
+		panic(_MENSAJE_PANIC_LISTA_VACIA)
+	}
 	return it.actual.dato
 }
 
 func (it *IteradorLista[T]) Siguiente() {
+	if it.lista.EstaVacia() {
+		panic(_MENSAJE_PANIC_LISTA_VACIA)
+	}
 	it.actual = it.actual.siguiente
 }
 
@@ -136,9 +142,9 @@ func (it *IteradorLista[T]) Insertar(dato T) {
 
 }
 
-func (it *IteradorLista[T]) Borrar(dato T) {
-	if it.actual == nil {
-		return
+func (it *IteradorLista[T]) Borrar() T {
+	if it.lista.EstaVacia() {
+		panic(_MENSAJE_PANIC_LISTA_VACIA)
 	}
 
 	if it.actual == it.lista.primero {
@@ -146,7 +152,7 @@ func (it *IteradorLista[T]) Borrar(dato T) {
 	} else {
 		it.anterior.siguiente = it.actual.siguiente
 	}
-
+	borrado := it.actual.dato
 	it.actual = it.actual.siguiente
-
+	return borrado
 }
