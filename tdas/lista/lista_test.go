@@ -230,15 +230,92 @@ func TestVerMixeadoDiezElementos(t *testing.T) {
 
 func TestIterarInternoPocosElementos(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
+	var contador int = 0
 	for i := 1; i <= 10; i++ {
 		lista.InsertarPrimero(i)
-		require.Equal(t, i, lista.Largo())
 	}
-	require.Equal(t, 10, lista.VerPrimero())
-	require.Equal(t, 1, lista.VerUltimo())
 	lista.Iterar(func(v int) bool {
-		fmt.Println(v)
+		contador++
 		return true
 	})
+	require.Equal(t, contador, 10, "si inserto 10 elementos, el contador debe iterar naturalmente 10 veces (sin interrupciones)")
 
 }
+
+func TestIterarInternoListaVacia(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	var contador int = 0
+	lista.Iterar(func(v int) bool {
+		fmt.Println(v)
+		contador++
+		return true
+	})
+	require.Equal(t, contador, 0, "Cuando iteramos una lista vacia, el contador debe acumular 0 vueltas")
+}
+
+func TestIterarInternoCortaIteracion(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 0; i <= 2; i++ {
+		lista.InsertarPrimero(i)
+	}
+	var contador int = 0
+	lista.Iterar(func(v int) bool {
+		contador++
+		return v%2 == 0
+	})
+	require.Equal(t, 2, contador, "Cuando iteramos una lista y devolvemos false, la iteracion debe frenar, por mas que hayan mas elementos.")
+}
+
+func TestIteradorExternoListaVacia(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	it := lista.Iterador()
+
+	var contador int = 0
+	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
+	for it.HaySiguiente() {
+		contador++
+		it.Siguiente()
+	}
+
+	require.Equal(t, 0, contador, "Cuando iteramos una lista vacia, el contador acumula 0")
+
+}
+
+func TestIteradorExternoRecorridoCompletoPocosElementos(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[string]()
+	letras := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
+
+	for _, letra := range letras {
+		lista.InsertarPrimero(letra)
+	}
+
+	var i int = 0
+	it := lista.Iterador()
+
+	for it.HaySiguiente() {
+		require.Equal(t, letras[i], it.VerActual(), "a medida que iteramos la lista, el actual se va moviendo")
+		it.Siguiente()
+	}
+}
+
+/*
+func TestIteradorExternoRecorridoInsertarYBorrar(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+
+	for i := 0; i <= 10; i++ {
+		lista.InsertarPrimero(i)
+	}
+
+	it := lista.Iterador()
+
+	for it.HaySiguiente() {
+
+		if it.VerActual()%2 == 0 {
+			it.Insertar(100)
+		}
+
+		it.Siguiente()
+	}
+	require.Equal(t, 16, lista.Largo(), "si insertamos intercaladamente en posiciones pares, el largo es 16")
+}
+*/

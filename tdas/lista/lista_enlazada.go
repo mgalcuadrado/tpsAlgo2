@@ -104,7 +104,7 @@ type IteradorLista[T any] struct {
 }
 
 func (lista *listaEnlazada[T]) Iterador() *IteradorLista[T] {
-	return &IteradorLista[T]{actual: lista.primero}
+	return &IteradorLista[T]{actual: lista.primero, anterior: nil, lista: lista}
 }
 
 func (it *IteradorLista[T]) HaySiguiente() bool {
@@ -129,17 +129,24 @@ func (it *IteradorLista[T]) Insertar(dato T) {
 	nuevoNodo := &nodoLista[T]{dato: dato}
 
 	if it.anterior == nil {
+
 		nuevoNodo.siguiente = it.lista.primero
 		it.lista.primero = nuevoNodo
+
+		if it.lista.ultimo == nil {
+			it.lista.ultimo = nuevoNodo
+		}
 	} else {
+
 		nuevoNodo.siguiente = it.actual
 		it.anterior.siguiente = nuevoNodo
 	}
 
-	if it.anterior != nil {
-		it.anterior = nuevoNodo
-	}
+	it.anterior = nuevoNodo
 
+	if it.actual == nil {
+		it.lista.ultimo = nuevoNodo
+	}
 }
 
 func (it *IteradorLista[T]) Borrar() T {
