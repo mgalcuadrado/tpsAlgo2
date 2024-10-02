@@ -92,7 +92,6 @@ func (lista *listaEnlazada[T]) Largo() int {
 //@anto acá no entiendo qué estás haciendo
 func (lista *listaEnlazada[T]) Iterar(visitar func(T) bool) {
 	actual := lista.primero
-
 	for actual != nil {
 		if !visitar(actual.dato) {
 			return
@@ -102,7 +101,7 @@ func (lista *listaEnlazada[T]) Iterar(visitar func(T) bool) {
 }
 
 /* **************** DEFINICIÓN DE LA STRUCT ITERADOR EXTERNO **************** */
-type iteradorLista[T any] struct { //justamente el iterador lista no tiene una interfaz que el usuario tenga que conocer
+type iteradorLista[T any] struct {
 	actual   *nodoLista[T]
 	anterior *nodoLista[T]
 	lista    *listaEnlazada[T]
@@ -116,7 +115,6 @@ func (lista *listaEnlazada[T]) Iterador() IteradorLista[T] {
 	iterador.anterior = nil //igual esto lo define el lenguaje directamente
 	iterador.lista = lista
 	return iterador
-	//return &IteradorLista[T]{actual: lista.primero, anterior: nil, lista: lista}
 }
 
 func (it *iteradorLista[T]) HaySiguiente() bool {
@@ -134,7 +132,7 @@ func (it *iteradorLista[T]) Siguiente() {
 	if it.lista.EstaVacia() {
 		panic(_MENSAJE_PANIC_LISTA_VACIA)
 	}
-	it.anterior = it.actual //hay que mantener la invariante de representación (y por ende el anterior actualizado)
+	it.anterior = it.actual //hay que mantener la invariante de representación
 	it.actual = it.actual.siguiente
 }
 
@@ -153,7 +151,6 @@ func (it *iteradorLista[T]) Insertar(dato T) {
 	if it.actual.siguiente == nil {
 		it.lista.ultimo = it.actual
 	}
-
 }
 
 func (it *iteradorLista[T]) Borrar() T {

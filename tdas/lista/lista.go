@@ -2,14 +2,19 @@ package lista
 
 type IteradorLista[T any] interface {
 
+	// HaySiguiente devuelve true cuando hay un elemento luego del actual para ver y false cuando se terminó la lista
 	HaySiguiente() bool
 	
+	// VerActual devuelve el elemento guardado en el elemento actual en el que se encuentra el iterador dentro de la lista
 	VerActual() T 
 
+	// Siguiente avanza el iterador al siguiente elemento de la lista
 	Siguiente()
 
+	// Insertar permite agregar un elemento a la lista entre el anterior y el actual
 	Insertar(T)
 
+	// Borrar permite eliminar el elemento actual de la lista
 	Borrar() T
 }
 
@@ -42,6 +47,7 @@ type Lista[T any] interface {
 
 	Iterar(visitar func(T) bool)
 
+	// Iterador crea un IteradorLista para la lista. 
 	Iterador() IteradorLista[T]
 }
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	TDALista "tdas/lista"
 	"testing"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -232,7 +231,117 @@ func TestListaVerMixeadoDiezElementos(t *testing.T) {
 	require.True(t, lista.EstaVacia())
 }
 
-//faltan pruebas de volumen y con otro tipo de dato
+/* **************** Pruebas de volumen **************** */
+
+func TestListaCienElementos(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 1; i <= 100; i++ {
+		lista.InsertarPrimero(i)
+		require.Equal(t, i, lista.VerPrimero())
+		require.Equal(t, 1, lista.VerUltimo())
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, i, lista.Largo())
+	}
+	for i:= 100; i >= 1; i-- {
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, i, lista.Largo())
+		require.Equal(t, 1, lista.VerUltimo())
+		require.Equal(t, i, lista.BorrarPrimero())
+	}
+	require.True(t, lista.EstaVacia())
+}
+
+func TestListaDiezMilElementos(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 1; i <= 10000; i++ {
+		lista.InsertarPrimero(i)
+		require.Equal(t, i, lista.VerPrimero())
+		require.Equal(t, 1, lista.VerUltimo())
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, i, lista.Largo())
+	}
+	for i:= 10000; i >= 1; i-- {
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, i, lista.Largo())
+		require.Equal(t, 1, lista.VerUltimo())
+		require.Equal(t, i, lista.BorrarPrimero())
+	}
+	require.True(t, lista.EstaVacia())
+}
+
+/* **************** Pruebas con distintos tipos de dato **************** */
+
+func TestListaTipoDeDatoRuna(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[rune]()
+	arr := []rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'}
+	for ind, elem := range arr {
+		require.Equal(t, ind, lista.Largo())
+		if ind % 2 == 0{
+			lista.InsertarPrimero(elem)
+		} else {
+			lista.InsertarUltimo(elem)
+		}
+		require.False(t, lista.EstaVacia())
+		
+	}
+	// i g e c a b d f h j
+	for i:= 8; i >= 0; i-=2 {
+		require.Equal(t, arr[i], lista.BorrarPrimero())
+		require.False(t, lista.EstaVacia())
+	}	
+	require.Equal(t, 5, lista.Largo())
+	for i:= 1; i <= 9; i +=2 {
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, arr[i], lista.BorrarPrimero())
+	}
+	require.True(t, lista.EstaVacia())
+}
+
+func TestListaTipoDeDatoFloat64(t *testing.T){
+	lista := TDALista.CrearListaEnlazada[float64]()
+	for i := float64(1); i <= float64(3); i++ {
+		lista.InsertarPrimero(i / 2)
+		require.Equal(t, i / 2, lista.VerPrimero())
+		require.Equal(t, float64(1.0 / 2), lista.VerUltimo())
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, int(i), lista.Largo())
+	} // [3 2 1]
+	for i := float64(4); i <= float64(7); i++ {
+		lista.InsertarUltimo(i / 2)
+		require.Equal(t, float64(3.0 / 2), lista.VerPrimero())
+		require.Equal(t, i / 2, lista.VerUltimo())
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, int(i), lista.Largo())
+	} // [3 2 1 4 5 6 7]
+	for i := float64(8); i <= float64(10); i++ {
+		lista.InsertarPrimero(i / 2)
+		require.Equal(t, i/2, lista.VerPrimero())
+		require.Equal(t, float64(7.0/ 2), lista.VerUltimo())
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, int(i), lista.Largo())
+	} //[10 9 8 3 2 1 4 5 6 7]
+	for i := float64(10); i >= float64(8); i-- {
+		require.Equal(t, i/2, lista.VerPrimero())
+		require.Equal(t, float64(7.0/2), lista.VerUltimo())
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, i/2, lista.BorrarPrimero())
+	} //[3 2 1 4 5 6 7]
+	require.Equal(t, 7, lista.Largo())
+	for i := float64(3); i >= float64(1); i-- {
+		require.Equal(t, i/2, lista.VerPrimero())
+		require.Equal(t, float64(7.0/2), lista.VerUltimo())
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, i/2, lista.BorrarPrimero())
+	} //[4 5 6 7]
+	require.Equal(t, 4, lista.Largo())
+	for i := float64(4); i <= float64(7); i++ {
+		require.Equal(t, i/2, lista.VerPrimero())
+		require.Equal(t, float64(7.0/2), lista.VerUltimo())
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, i/2, lista.BorrarPrimero())
+	}
+	require.True(t, lista.EstaVacia())
+}
 
 /* ******************************** */
 
@@ -262,35 +371,31 @@ func TestIteradorInternoIterarDiezElementos(t *testing.T) {
 		return true
 	})
 	require.Equal(t, contador, 10, "si inserto 10 elementos, el contador debe iterar naturalmente 10 veces (sin interrupciones)")
-
 }
 
-func TestIterarInternoIterarTresElementos(t *testing.T) {
+func TestIterarInternoIterarTresElementos(t *testing.T) { //@anto no entiendo muy bien qué hacés en esta prueba, no veo que uses la lista de strings.
 	listaInt := TDALista.CrearListaEnlazada[int]()
 	listaString := TDALista.CrearListaEnlazada[string]()
 	letras := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
-
 	for i := 0; i <= 2; i++ {
 		listaInt.InsertarPrimero(i)
 		listaString.InsertarPrimero(letras[i])
 	}
 	var contador int = 0
 	listaInt.Iterar(func(v int) bool {
-		contador++ //@anto no podemos editar una variable que no recibe como parámetro en la función...
+		contador++ 
 		return v%2 == 0
 	})
-
-	require.Equal(t, 2, contador, "Cuando iteramos una lista y devolvemos false, la iteracion debe frenar, por mas que hayan mas elementos.")
+	require.Equal(t, 2, contador, "Cuando iteramos una lista y la función visitar devuelve false la iteración debe frenar (aunque queden elementos en la lista)")
 	contador1 := 0
 	listaInt.Iterar(func(v int) bool {
-
 		contador1++
 		return letras[contador1] == "b"
 	})
 	require.Equal(t, 2, contador1, "Cuando iteramos una lista y devolvemos false, la iteracion debe frenar, por mas que hayan mas elementos.")
 }
 
-func TestIteradorInternoIterarMuchosElementos(t *testing.T) {
+func TestIteradorInternoIterarDiezMilElementos(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	var contador int = 0
 	for i := 1; i <= 10000; i++ {
@@ -301,10 +406,9 @@ func TestIteradorInternoIterarMuchosElementos(t *testing.T) {
 		return true
 	})
 	require.Equal(t, contador, 10000, "si inserto 10000 elementos, el contador debe iterar naturalmente 10 veces (sin interrupciones)")
-
 }
 
-//faltan pruebas de volumen y con otro tipo de dato
+//faltan pruebas de volumen y con otro tipo de dato. 
 
 /* ******************************** */
 /* **************** PRUEBAS DEL ITERADOR EXTERNO **************** */
@@ -504,10 +608,8 @@ func TestIteradorExternoBorrarUnElementoDelFinal(t *testing.T) {
 	require.True(t, lista.EstaVacia())
 }
 
-// falta prueba de borrar dos seguidos, borrar intercalados, prueba de volumen y prueba con distinto tipo de dato
 func TestIteradorExternoBorrarDosElementosSeguidos(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
-
 	for i := 1; i < 6; i++ {
 		lista.InsertarUltimo(i)
 	} //1 2 3 4 5
@@ -520,7 +622,6 @@ func TestIteradorExternoBorrarDosElementosSeguidos(t *testing.T) {
 		}
 	}
 	require.Equal(t, lista.Largo(), 3)
-
 	orden := []int{1, 2, 3}
 	for i := 0; i < len(orden); i++ {
 		require.False(t, lista.EstaVacia())
@@ -532,7 +633,6 @@ func TestIteradorExternoBorrarDosElementosSeguidos(t *testing.T) {
 
 func TestIteradorExternoBorrarIntercalado(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
-
 	for i := 1; i <= 10; i++ {
 		lista.InsertarUltimo(i)
 	} //1 2 3 4 5 6 7 8 9 10
@@ -545,11 +645,81 @@ func TestIteradorExternoBorrarIntercalado(t *testing.T) {
 		}
 	}
 	require.Equal(t, lista.Largo(), 5)
-
 	orden := []int{1, 3, 5, 7, 9}
 	for i := 0; i < len(orden); i++ {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, lista.BorrarPrimero(), orden[i])
+	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { lista.BorrarPrimero() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
+	require.True(t, lista.EstaVacia())
+}
+
+/* **************** Pruebas de volumen **************** */
+
+func TestIteradorExternoCienElementos(t *testing.T){
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 1; i <= 100; i++ {
+		lista.InsertarUltimo(i)
+	} 
+	contador := 1
+	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+		if contador%2 == 0 {
+			require.Equal(t, it.Borrar(), contador)
+		} else {
+			it.Siguiente()
+		}
+	}
+	require.Equal(t, lista.Largo(), 100 / 2)
+	for i := 1; i < 100; i+=2 {
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, lista.BorrarPrimero(), i)
+	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { lista.BorrarPrimero() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
+	require.True(t, lista.EstaVacia())
+}
+
+func TestIteradorExternoDiezMilElementos(t *testing.T){
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 1; i <= 10000; i++ {
+		lista.InsertarUltimo(i)
+	} 
+	contador := 1
+	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+		if contador%2 == 0 {
+			require.Equal(t, it.Borrar(), contador)
+		} else {
+			it.Siguiente()
+		}
+	}
+	require.Equal(t, lista.Largo(), 10000 / 2)
+	for i := 1; i < 10000; i+=2 {
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, lista.BorrarPrimero(), i)
+	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { lista.BorrarPrimero() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
+	require.True(t, lista.EstaVacia())
+}
+
+/* **************** Pruebas con distintos tipos de datos **************** */
+
+func TestIteradorExternoConTipoDeDatoString(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[string]()
+	arr := []string{"Wall-e", "quiere", "a", "Eva"}
+	for i := 0; i < len(arr); i++ {
+		lista.InsertarUltimo(arr[i])
+	}
+	contador := 0
+	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+		if contador%2 == 0 {
+			require.Equal(t, it.Borrar(), arr[contador])
+		} else {
+			it.Siguiente()
+		}
+	}
+	require.Equal(t, lista.Largo(), len(arr) / 2)
+	for i := 1; i < len(arr); i+=2 {
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, lista.BorrarPrimero(), arr[i])
 	}
 	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { lista.BorrarPrimero() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
 	require.True(t, lista.EstaVacia())
