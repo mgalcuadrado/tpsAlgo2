@@ -1,5 +1,18 @@
 package lista
 
+type IteradorLista[T any] interface {
+
+	HaySiguiente() bool
+	
+	VerActual() T 
+
+	Siguiente()
+
+	Insertar(T)
+
+	Borrar() T
+}
+
 type Lista[T any] interface {
 
 	// EstaVacia devuelve verdadero si la lista no tiene elementos agregados y false en caso contrario
@@ -29,5 +42,6 @@ type Lista[T any] interface {
 
 	Iterar(visitar func(T) bool)
 
-	Iterador() *IteradorLista[T]
+	Iterador() IteradorLista[T]
 }
+
