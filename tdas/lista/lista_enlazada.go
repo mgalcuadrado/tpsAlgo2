@@ -143,7 +143,7 @@ func (it *iteradorLista[T]) Insertar(dato T) {
 		it.lista.InsertarPrimero(dato) //acá ya se suma a largo directamente
 		it.actual = it.lista.primero
 	} else {
-		nuevoNodo :=new(nodoLista[T])
+		nuevoNodo := new(nodoLista[T])
 		nuevoNodo.dato = dato
 		nuevoNodo.siguiente = it.actual
 		it.anterior.siguiente = nuevoNodo
@@ -153,7 +153,7 @@ func (it *iteradorLista[T]) Insertar(dato T) {
 	if it.actual.siguiente == nil {
 		it.lista.ultimo = it.actual
 	}
-	
+
 }
 
 func (it *iteradorLista[T]) Borrar() T {
@@ -169,7 +169,6 @@ func (it *iteradorLista[T]) Borrar() T {
 		it.anterior.siguiente = it.actual.siguiente
 	}
 	it.actual = it.actual.siguiente //para el primero eso es el que ahora es el primero, para el último eso es nil, para los demás casos va bien
-	it.lista.largo-- //invariante de representación
+	it.lista.largo--                //invariante de representación
 	return borrado
 }
-
