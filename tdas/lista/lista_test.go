@@ -744,9 +744,54 @@ func TestIteradorExternoBorrarIntercaladoDiezMilElementos(t *testing.T) {
 
 /* **************** Pruebas con distintos tipos de datos **************** */
 
+func TestIteradorExternoConTipoDeDatoEntero(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 0; i < 10; i++ {
+		lista.InsertarUltimo(i)
+	}
+	contador := 0
+	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+		if contador%2 == 0 {
+			require.Equal(t, it.Borrar(), contador)
+		} else {
+			it.Siguiente()
+		}
+	}
+	require.Equal(t, lista.Largo(), 10/2)
+	for i := 1; i < 10; i += 2 {
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, lista.BorrarPrimero(), i)
+	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { lista.BorrarPrimero() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
+	require.True(t, lista.EstaVacia())
+}
+
 func TestIteradorExternoConTipoDeDatoString(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[string]()
 	arr := []string{"Wall-e", "quiere", "a", "Eva"}
+	for i := 0; i < len(arr); i++ {
+		lista.InsertarUltimo(arr[i])
+	}
+	contador := 0
+	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+		if contador%2 == 0 {
+			require.Equal(t, it.Borrar(), arr[contador])
+		} else {
+			it.Siguiente()
+		}
+	}
+	require.Equal(t, lista.Largo(), len(arr)/2)
+	for i := 1; i < len(arr); i += 2 {
+		require.False(t, lista.EstaVacia())
+		require.Equal(t, lista.BorrarPrimero(), arr[i])
+	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { lista.BorrarPrimero() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
+	require.True(t, lista.EstaVacia())
+}
+
+func TestIteradorExternoConTipoDeDatoRuna(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[rune]()
+	arr := []rune{'W', 'a', 'l', 'l', '-', 'e', ' ', 'q', 'u', 'i', 'e', 'r', 'e', ' ', 'a', ' ', 'E', 'v', 'a'}
 	for i := 0; i < len(arr); i++ {
 		lista.InsertarUltimo(arr[i])
 	}
