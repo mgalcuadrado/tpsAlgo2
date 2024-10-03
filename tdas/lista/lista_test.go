@@ -4,6 +4,7 @@ import (
 	"fmt"
 	TDALista "tdas/lista"
 	"testing"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -242,7 +243,7 @@ func TestListaCienElementos(t *testing.T) {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, i, lista.Largo())
 	}
-	for i:= 100; i >= 1; i-- {
+	for i := 100; i >= 1; i-- {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, i, lista.Largo())
 		require.Equal(t, 1, lista.VerUltimo())
@@ -260,7 +261,7 @@ func TestListaDiezMilElementos(t *testing.T) {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, i, lista.Largo())
 	}
-	for i:= 10000; i >= 1; i-- {
+	for i := 10000; i >= 1; i-- {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, i, lista.Largo())
 		require.Equal(t, 1, lista.VerUltimo())
@@ -276,47 +277,47 @@ func TestListaTipoDeDatoRuna(t *testing.T) {
 	arr := []rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'}
 	for ind, elem := range arr {
 		require.Equal(t, ind, lista.Largo())
-		if ind % 2 == 0{
+		if ind%2 == 0 {
 			lista.InsertarPrimero(elem)
 		} else {
 			lista.InsertarUltimo(elem)
 		}
 		require.False(t, lista.EstaVacia())
-		
+
 	}
 	// i g e c a b d f h j
-	for i:= 8; i >= 0; i-=2 {
+	for i := 8; i >= 0; i -= 2 {
 		require.Equal(t, arr[i], lista.BorrarPrimero())
 		require.False(t, lista.EstaVacia())
-	}	
+	}
 	require.Equal(t, 5, lista.Largo())
-	for i:= 1; i <= 9; i +=2 {
+	for i := 1; i <= 9; i += 2 {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, arr[i], lista.BorrarPrimero())
 	}
 	require.True(t, lista.EstaVacia())
 }
 
-func TestListaTipoDeDatoFloat64(t *testing.T){
+func TestListaTipoDeDatoFloat64(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[float64]()
 	for i := float64(1); i <= float64(3); i++ {
 		lista.InsertarPrimero(i / 2)
-		require.Equal(t, i / 2, lista.VerPrimero())
-		require.Equal(t, float64(1.0 / 2), lista.VerUltimo())
+		require.Equal(t, i/2, lista.VerPrimero())
+		require.Equal(t, float64(1.0/2), lista.VerUltimo())
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, int(i), lista.Largo())
 	} // [3 2 1]
 	for i := float64(4); i <= float64(7); i++ {
 		lista.InsertarUltimo(i / 2)
-		require.Equal(t, float64(3.0 / 2), lista.VerPrimero())
-		require.Equal(t, i / 2, lista.VerUltimo())
+		require.Equal(t, float64(3.0/2), lista.VerPrimero())
+		require.Equal(t, i/2, lista.VerUltimo())
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, int(i), lista.Largo())
 	} // [3 2 1 4 5 6 7]
 	for i := float64(8); i <= float64(10); i++ {
 		lista.InsertarPrimero(i / 2)
 		require.Equal(t, i/2, lista.VerPrimero())
-		require.Equal(t, float64(7.0/ 2), lista.VerUltimo())
+		require.Equal(t, float64(7.0/2), lista.VerUltimo())
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, int(i), lista.Largo())
 	} //[10 9 8 3 2 1 4 5 6 7]
@@ -373,22 +374,22 @@ func TestIteradorInternoIterarDiezElementos(t *testing.T) {
 	require.Equal(t, contador, 10, "si inserto 10 elementos, el contador debe iterar naturalmente 10 veces (sin interrupciones)")
 }
 
-func TestIterarInternoIterarTresElementos(t *testing.T) { //@anto no entiendo muy bien qué hacés en esta prueba, no veo que uses la lista de strings.
+func TestIterarInternoIterarConFreno(t *testing.T) {
 	listaInt := TDALista.CrearListaEnlazada[int]()
 	listaString := TDALista.CrearListaEnlazada[string]()
 	letras := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
-	for i := 0; i <= 2; i++ {
+	for i := 0; i < 10; i++ {
 		listaInt.InsertarPrimero(i)
 		listaString.InsertarPrimero(letras[i])
 	}
 	var contador int = 0
 	listaInt.Iterar(func(v int) bool {
-		contador++ 
+		contador++
 		return v%2 == 0
 	})
-	require.Equal(t, 2, contador, "Cuando iteramos una lista y la función visitar devuelve false la iteración debe frenar (aunque queden elementos en la lista)")
+	require.Equal(t, 1, contador, "Cuando iteramos una lista y la función visitar devuelve false la iteración debe frenar (aunque queden elementos en la lista)")
 	contador1 := 0
-	listaInt.Iterar(func(v int) bool {
+	listaString.Iterar(func(v string) bool {
 		contador1++
 		return letras[contador1] == "b"
 	})
@@ -408,7 +409,7 @@ func TestIteradorInternoIterarDiezMilElementos(t *testing.T) {
 	require.Equal(t, contador, 10000, "si inserto 10000 elementos, el contador debe iterar naturalmente 10 veces (sin interrupciones)")
 }
 
-//faltan pruebas de volumen y con otro tipo de dato. 
+//faltan pruebas de volumen y con otro tipo de dato.
 
 /* ******************************** */
 /* **************** PRUEBAS DEL ITERADOR EXTERNO **************** */
@@ -656,11 +657,11 @@ func TestIteradorExternoBorrarIntercalado(t *testing.T) {
 
 /* **************** Pruebas de volumen **************** */
 
-func TestIteradorExternoCienElementos(t *testing.T){
+func TestIteradorExternoCienElementos(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	for i := 1; i <= 100; i++ {
 		lista.InsertarUltimo(i)
-	} 
+	}
 	contador := 1
 	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
 		if contador%2 == 0 {
@@ -669,8 +670,8 @@ func TestIteradorExternoCienElementos(t *testing.T){
 			it.Siguiente()
 		}
 	}
-	require.Equal(t, lista.Largo(), 100 / 2)
-	for i := 1; i < 100; i+=2 {
+	require.Equal(t, lista.Largo(), 100/2)
+	for i := 1; i < 100; i += 2 {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, lista.BorrarPrimero(), i)
 	}
@@ -678,11 +679,11 @@ func TestIteradorExternoCienElementos(t *testing.T){
 	require.True(t, lista.EstaVacia())
 }
 
-func TestIteradorExternoDiezMilElementos(t *testing.T){
+func TestIteradorExternoDiezMilElementos(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	for i := 1; i <= 10000; i++ {
 		lista.InsertarUltimo(i)
-	} 
+	}
 	contador := 1
 	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
 		if contador%2 == 0 {
@@ -691,8 +692,8 @@ func TestIteradorExternoDiezMilElementos(t *testing.T){
 			it.Siguiente()
 		}
 	}
-	require.Equal(t, lista.Largo(), 10000 / 2)
-	for i := 1; i < 10000; i+=2 {
+	require.Equal(t, lista.Largo(), 10000/2)
+	for i := 1; i < 10000; i += 2 {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, lista.BorrarPrimero(), i)
 	}
@@ -716,8 +717,8 @@ func TestIteradorExternoConTipoDeDatoString(t *testing.T) {
 			it.Siguiente()
 		}
 	}
-	require.Equal(t, lista.Largo(), len(arr) / 2)
-	for i := 1; i < len(arr); i+=2 {
+	require.Equal(t, lista.Largo(), len(arr)/2)
+	for i := 1; i < len(arr); i += 2 {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, lista.BorrarPrimero(), arr[i])
 	}
