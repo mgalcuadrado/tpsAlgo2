@@ -4,9 +4,9 @@ type IteradorLista[T any] interface {
 
 	// HaySiguiente devuelve true cuando hay un elemento luego del actual para ver y false cuando se terminó la lista
 	HaySiguiente() bool
-	
+
 	// VerActual devuelve el elemento guardado en el elemento actual en el que se encuentra el iterador dentro de la lista
-	VerActual() T 
+	VerActual() T
 
 	// Siguiente avanza el iterador al siguiente elemento de la lista
 	Siguiente()
@@ -45,9 +45,9 @@ type Lista[T any] interface {
 	// Si la lista está vacía devuelve 0
 	Largo() int
 
+	// Iterar itera la lista internamente visitando cada elemento de la misma siempre que la función auxiliar visitar devuelva true; visitar recibe un dato T de la lista y devuelve true o false
 	Iterar(visitar func(T) bool)
 
-	// Iterador crea un IteradorLista para la lista. 
+	// Iterador crea un IteradorLista para la lista.
 	Iterador() IteradorLista[T]
 }
-

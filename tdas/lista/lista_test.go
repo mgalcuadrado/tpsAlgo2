@@ -363,10 +363,10 @@ func TestIteradorInternoListaVacia(t *testing.T) {
 
 func TestIteradorInternoIterarDiezElementos(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
-	var contador int = 0
 	for i := 1; i <= 10; i++ {
 		lista.InsertarPrimero(i)
 	}
+	var contador int = 0
 	lista.Iterar(func(v int) bool {
 		contador++
 		return true
@@ -374,13 +374,23 @@ func TestIteradorInternoIterarDiezElementos(t *testing.T) {
 	require.Equal(t, contador, 10, "si inserto 10 elementos, el contador debe iterar naturalmente 10 veces (sin interrupciones)")
 }
 
-func TestIterarInternoIterarConFreno(t *testing.T) {
+func TestIteradorInternoVerDiezElementos(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 1; i <= 10; i++ {
+		lista.InsertarPrimero(i)
+	}
+	var suma int = 0
+	lista.Iterar(func(v int) bool {
+		suma += v
+		return true
+	})
+	require.Equal(t, suma, 55, "al ver todos los elementos, suma debería guardar la suma de los mismos")
+}
+
+func TestIteradorInternoIterarParcialmenteLaListaDeEnteros(t *testing.T) {
 	listaInt := TDALista.CrearListaEnlazada[int]()
-	listaString := TDALista.CrearListaEnlazada[string]()
-	letras := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
 	for i := 0; i < 10; i++ {
 		listaInt.InsertarPrimero(i)
-		listaString.InsertarPrimero(letras[i])
 	}
 	var contador int = 0
 	listaInt.Iterar(func(v int) bool {
@@ -388,12 +398,51 @@ func TestIterarInternoIterarConFreno(t *testing.T) {
 		return v%2 == 0
 	})
 	require.Equal(t, 1, contador, "Cuando iteramos una lista y la función visitar devuelve false la iteración debe frenar (aunque queden elementos en la lista)")
+}
+
+/* **************** Pruebas con distintos tipos de dato **************** */
+
+func TestIterarInternoIterarParcialmenteLaListaDeRunas(t *testing.T) {
+	listaRune := TDALista.CrearListaEnlazada[rune]()
+	operadores := []rune{'+', '-', '*', '/', '^', '?'}
+	for i := 0; i < len(operadores); i++ {
+		listaRune.InsertarPrimero(operadores[i])
+	}
+	var contador int = 0
+	listaRune.Iterar(func(v rune) bool {
+		contador++
+		return contador < 4
+	})
+	require.Equal(t, 4, contador, "Cuando iteramos una lista y la función visitar devuelve false la iteración debe frenar (aunque queden elementos en la lista)")
+}
+
+func TestIterarInternoIterarParcialmenteConCadenas(t *testing.T) {
+	listaString := TDALista.CrearListaEnlazada[string]()
+	letras := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
+	for i := 0; i < len(letras); i++ {
+		listaString.InsertarPrimero(letras[i])
+	}
 	contador1 := 0
 	listaString.Iterar(func(v string) bool {
 		contador1++
 		return letras[contador1] == "b"
 	})
 	require.Equal(t, 2, contador1, "Cuando iteramos una lista y devolvemos false, la iteracion debe frenar, por mas que hayan mas elementos.")
+}
+
+/* **************** Pruebas de volumen **************** */
+
+func TestIteradorInternoIterarMilElementos(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	var contador int = 0
+	for i := 1; i <= 1000; i++ {
+		lista.InsertarPrimero(i)
+	}
+	lista.Iterar(func(v int) bool {
+		contador++
+		return true
+	})
+	require.Equal(t, contador, 1000, "si inserto 10000 elementos, el contador debe iterar naturalmente 10 veces (sin interrupciones)")
 }
 
 func TestIteradorInternoIterarDiezMilElementos(t *testing.T) {
@@ -408,8 +457,6 @@ func TestIteradorInternoIterarDiezMilElementos(t *testing.T) {
 	})
 	require.Equal(t, contador, 10000, "si inserto 10000 elementos, el contador debe iterar naturalmente 10 veces (sin interrupciones)")
 }
-
-//faltan pruebas de volumen y con otro tipo de dato.
 
 /* ******************************** */
 /* **************** PRUEBAS DEL ITERADOR EXTERNO **************** */
@@ -448,24 +495,6 @@ func TestIteradorExternoIteracionCompletaConDiezElementos(t *testing.T) {
 
 	for it := lista.Iterador(); it.HaySiguiente(); i++ {
 		require.Equal(t, letras[i], it.VerActual(), "A medida que iteramos la lista, el actual se va moviendo")
-		it.Siguiente()
-	}
-}
-
-func TestIteradorExternoIteracionCompletaConMuchosElementos(t *testing.T) {
-	lista := TDALista.CrearListaEnlazada[int]()
-	numeros := make([]int, 10001)
-
-	for i := 0; i <= 10000; i++ {
-		numeros[i] = i
-	}
-	for i := 0; i <= 10000; i++ {
-		lista.InsertarUltimo(i)
-	}
-	var i int = 0
-
-	for it := lista.Iterador(); it.HaySiguiente(); i++ {
-		require.Equal(t, numeros[i], it.VerActual(), "A medida que iteramos la lista, el actual se va moviendo")
 		it.Siguiente()
 	}
 }
@@ -537,6 +566,7 @@ func TestIteradorExternoInsertarUnElementoAlFinal(t *testing.T) {
 }
 
 /* **************** Borrar() **************** */
+
 func TestIteradorExternoBorrarUnElementoDelPrincipio(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	for i := 1; i < 6; i++ {
@@ -575,7 +605,6 @@ func TestIteradorExternoBorrarUnElementoDelMedio(t *testing.T) {
 			it.Siguiente()
 		}
 	}
-
 	require.Equal(t, lista.Largo(), 4)
 	orden := []int{1, 2, 4, 5}
 	for i := 0; i < len(orden); i++ {
@@ -657,7 +686,19 @@ func TestIteradorExternoBorrarIntercalado(t *testing.T) {
 
 /* **************** Pruebas de volumen **************** */
 
-func TestIteradorExternoCienElementos(t *testing.T) {
+func TestIteradorExternoIteracionCompletaConDiezMilElementos(t *testing.T) {
+	lista := TDALista.CrearListaEnlazada[int]()
+	for i := 0; i < 10000; i++ {
+		lista.InsertarUltimo(i)
+	}
+	var contador int = 0
+	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+		require.Equal(t, contador, it.VerActual(), "A medida que iteramos la lista, el actual se va moviendo")
+		it.Siguiente()
+	}
+}
+
+func TestIteradorExternoBorrarIntercaladoCienElementos(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	for i := 1; i <= 100; i++ {
 		lista.InsertarUltimo(i)
@@ -679,7 +720,7 @@ func TestIteradorExternoCienElementos(t *testing.T) {
 	require.True(t, lista.EstaVacia())
 }
 
-func TestIteradorExternoDiezMilElementos(t *testing.T) {
+func TestIteradorExternoBorrarIntercaladoDiezMilElementos(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	for i := 1; i <= 10000; i++ {
 		lista.InsertarUltimo(i)

@@ -89,7 +89,6 @@ func (lista *listaEnlazada[T]) Largo() int {
 }
 
 /* ****************  IMPLEMENTACIÓN DEL ITERADOR INTERNO **************** */
-//@anto acá no entiendo qué estás haciendo
 func (lista *listaEnlazada[T]) Iterar(visitar func(T) bool) {
 	actual := lista.primero
 	for actual != nil {
@@ -112,7 +111,7 @@ type iteradorLista[T any] struct {
 func (lista *listaEnlazada[T]) Iterador() IteradorLista[T] {
 	iterador := new(iteradorLista[T])
 	iterador.actual = lista.primero
-	iterador.anterior = nil //igual esto lo define el lenguaje directamente
+	iterador.anterior = nil //esto lo define el lenguaje directamente, pero se explicitan las invariantes de representación
 	iterador.lista = lista
 	return iterador
 }
@@ -132,7 +131,7 @@ func (it *iteradorLista[T]) Siguiente() {
 	if it.lista.EstaVacia() {
 		panic(_MENSAJE_PANIC_LISTA_VACIA)
 	}
-	it.anterior = it.actual //hay que mantener la invariante de representación
+	it.anterior = it.actual
 	it.actual = it.actual.siguiente
 }
 
