@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	_MENSAJE_PANIC_LISTA_VACIA         string = "La lista esta vacia"
-	_MENSAJE_TESTING_PANIC_LISTA_VACIA string = "No hay elementos en la lista"
+	_MENSAJE_PANIC_LISTA_VACIA              string = "La lista esta vacia"
+	_MENSAJE_TESTING_PANIC_LISTA_VACIA      string = "No hay elementos en la lista"
+	_MENSAJE_PANIC_FIN_DE_ITERACION         string = "El iterador termino de iterar"
+	_MENSAJE_TESTING_PANIC_FIN_DE_ITERACION string = "No debe llamarse a esta función si el iterador finalizó la iteración"
 )
 
 /* ******************************** */
@@ -465,10 +467,11 @@ func TestIteradorInternoIterarDiezMilElementos(t *testing.T) {
 func TestIteradorExternoListaVacia(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[int]()
 	it := lista.Iterador()
-	var contador int = 0
-	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
-	for it.HaySiguiente() {
-		contador++
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	contador := 0
+	for ; it.HaySiguiente(); contador++ {
 		it.Siguiente()
 	}
 	require.Equal(t, 0, contador, "Cuando iteramos una lista vacia, no hay elementos para iterar")
@@ -478,11 +481,15 @@ func TestIteradorExternoListaConUnElemento(t *testing.T) {
 	lista := TDALista.CrearListaEnlazada[rune]()
 	lista.InsertarPrimero('a')
 	contador := 0
-	for iter := lista.Iterador(); iter.HaySiguiente(); contador++ {
-		require.Equal(t, 'a', iter.VerActual())
-		iter.Siguiente()
+	it := lista.Iterador()
+	for ; it.HaySiguiente(); contador++ {
+		require.Equal(t, 'a', it.VerActual())
+		it.Siguiente()
 	}
 	require.Equal(t, 1, contador)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 }
 
 func TestIteradorExternoIteracionCompletaConDiezElementos(t *testing.T) {
@@ -491,12 +498,14 @@ func TestIteradorExternoIteracionCompletaConDiezElementos(t *testing.T) {
 	for _, letra := range letras {
 		lista.InsertarUltimo(letra)
 	} //insertandoUltimo queda a b c d e f g h i j
-	var i int = 0
-
-	for it := lista.Iterador(); it.HaySiguiente(); i++ {
+	it := lista.Iterador()
+	for i := 0; it.HaySiguiente(); i++ {
 		require.Equal(t, letras[i], it.VerActual(), "A medida que iteramos la lista, el actual se va moviendo")
 		it.Siguiente()
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 }
 
 /* **************** Insertar() **************** */
@@ -506,13 +515,16 @@ func TestIteradorExternoInsertarUnElementoAlMedio(t *testing.T) {
 	for i := 1; i < 4; i++ {
 		lista.InsertarUltimo(i)
 	}
-	contador := 0
-	for it := lista.Iterador(); it.HaySiguiente(); it.Siguiente() {
+	it := lista.Iterador()
+	for contador := 0; it.HaySiguiente(); it.Siguiente() {
 		if contador == 1 {
 			it.Insertar(4)
 		}
 		contador++
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	orden := []int{1, 4, 2, 3}
 	for i := 0; i < len(orden); i++ {
 		require.False(t, lista.EstaVacia())
@@ -527,13 +539,16 @@ func TestIteradorExternoInsertarUnElementoAlPrincipio(t *testing.T) {
 	for i := 1; i < 4; i++ {
 		list.InsertarUltimo(i)
 	} // 1 2 3
-	contador := 0
-	for it := list.Iterador(); it.HaySiguiente(); it.Siguiente() {
+	it := list.Iterador()
+	for contador := 0; it.HaySiguiente(); it.Siguiente() {
 		if contador == 0 {
 			it.Insertar(4)
 			contador++
 		}
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	orden := []int{4, 1, 2, 3}
 	for i := 0; i < len(orden); i++ {
 		require.False(t, list.EstaVacia())
@@ -549,13 +564,16 @@ func TestIteradorExternoInsertarUnElementoAlFinal(t *testing.T) {
 	for i := 1; i < 4; i++ {
 		lista.InsertarUltimo(i)
 	}
-	contador := 0
-	for it := lista.Iterador(); it.HaySiguiente(); it.Siguiente() {
+	it := lista.Iterador()
+	for contador := 0; it.HaySiguiente(); it.Siguiente() {
 		if contador == 2 {
 			it.Insertar(4)
 		}
 		contador++
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	orden := []int{1, 2, 4, 3}
 	for i := 0; i < len(orden); i++ {
 		require.False(t, lista.EstaVacia())
@@ -572,8 +590,8 @@ func TestIteradorExternoBorrarUnElementoDelPrincipio(t *testing.T) {
 	for i := 1; i < 6; i++ {
 		lista.InsertarUltimo(i)
 	} //1 2 3 4 5
-	contador := 1
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 1; it.HaySiguiente(); contador++ {
 		if contador == 1 {
 			require.Equal(t, it.Borrar(), 1)
 		}
@@ -581,6 +599,9 @@ func TestIteradorExternoBorrarUnElementoDelPrincipio(t *testing.T) {
 			it.Siguiente()
 		}
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	orden := []int{2, 3, 4, 5}
 	for i := 0; i < len(orden); i++ {
 		require.False(t, lista.EstaVacia())
@@ -595,8 +616,8 @@ func TestIteradorExternoBorrarUnElementoDelMedio(t *testing.T) {
 	for i := 1; i < 6; i++ {
 		lista.InsertarUltimo(i)
 	} //1 2 3 4 5
-	contador := 1
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 1; it.HaySiguiente(); contador++ {
 		if contador == 3 {
 			require.Equal(t, it.Borrar(), 3)
 		}
@@ -605,6 +626,9 @@ func TestIteradorExternoBorrarUnElementoDelMedio(t *testing.T) {
 			it.Siguiente()
 		}
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	require.Equal(t, lista.Largo(), 4)
 	orden := []int{1, 2, 4, 5}
 	for i := 0; i < len(orden); i++ {
@@ -620,8 +644,8 @@ func TestIteradorExternoBorrarUnElementoDelFinal(t *testing.T) {
 	for i := 1; i < 6; i++ {
 		lista.InsertarUltimo(i)
 	} //1 2 3 4 5
-	contador := 1
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 1; it.HaySiguiente(); contador++ {
 		if contador == 5 {
 			require.Equal(t, it.Borrar(), 5)
 		}
@@ -635,6 +659,9 @@ func TestIteradorExternoBorrarUnElementoDelFinal(t *testing.T) {
 		require.Equal(t, lista.BorrarPrimero(), orden[i])
 	}
 	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { lista.BorrarPrimero() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	require.True(t, lista.EstaVacia())
 }
 
@@ -643,8 +670,8 @@ func TestIteradorExternoBorrarDosElementosSeguidos(t *testing.T) {
 	for i := 1; i < 6; i++ {
 		lista.InsertarUltimo(i)
 	} //1 2 3 4 5
-	contador := 1
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 1; it.HaySiguiente(); contador++ {
 		if contador == 5 || contador == 4 {
 			require.Equal(t, it.Borrar(), contador)
 		} else {
@@ -657,6 +684,9 @@ func TestIteradorExternoBorrarDosElementosSeguidos(t *testing.T) {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, lista.BorrarPrimero(), orden[i])
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { lista.BorrarPrimero() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
 	require.True(t, lista.EstaVacia())
 }
@@ -666,8 +696,8 @@ func TestIteradorExternoBorrarIntercalado(t *testing.T) {
 	for i := 1; i <= 10; i++ {
 		lista.InsertarUltimo(i)
 	} //1 2 3 4 5 6 7 8 9 10
-	contador := 1
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 1; it.HaySiguiente(); contador++ {
 		if contador%2 == 0 {
 			require.Equal(t, it.Borrar(), contador)
 		} else {
@@ -680,6 +710,9 @@ func TestIteradorExternoBorrarIntercalado(t *testing.T) {
 		require.False(t, lista.EstaVacia())
 		require.Equal(t, lista.BorrarPrimero(), orden[i])
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	require.PanicsWithValue(t, _MENSAJE_PANIC_LISTA_VACIA, func() { lista.BorrarPrimero() }, _MENSAJE_TESTING_PANIC_LISTA_VACIA)
 	require.True(t, lista.EstaVacia())
 }
@@ -691,11 +724,14 @@ func TestIteradorExternoIteracionCompletaConDiezMilElementos(t *testing.T) {
 	for i := 0; i < 10000; i++ {
 		lista.InsertarUltimo(i)
 	}
-	var contador int = 0
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 0; it.HaySiguiente(); contador++ {
 		require.Equal(t, contador, it.VerActual(), "A medida que iteramos la lista, el actual se va moviendo")
 		it.Siguiente()
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 }
 
 func TestIteradorExternoBorrarIntercaladoCienElementos(t *testing.T) {
@@ -703,14 +739,17 @@ func TestIteradorExternoBorrarIntercaladoCienElementos(t *testing.T) {
 	for i := 1; i <= 100; i++ {
 		lista.InsertarUltimo(i)
 	}
-	contador := 1
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 1; it.HaySiguiente(); contador++ {
 		if contador%2 == 0 {
 			require.Equal(t, it.Borrar(), contador)
 		} else {
 			it.Siguiente()
 		}
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	require.Equal(t, lista.Largo(), 100/2)
 	for i := 1; i < 100; i += 2 {
 		require.False(t, lista.EstaVacia())
@@ -725,14 +764,17 @@ func TestIteradorExternoBorrarIntercaladoDiezMilElementos(t *testing.T) {
 	for i := 1; i <= 10000; i++ {
 		lista.InsertarUltimo(i)
 	}
-	contador := 1
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 1; it.HaySiguiente(); contador++ {
 		if contador%2 == 0 {
 			require.Equal(t, it.Borrar(), contador)
 		} else {
 			it.Siguiente()
 		}
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	require.Equal(t, lista.Largo(), 10000/2)
 	for i := 1; i < 10000; i += 2 {
 		require.False(t, lista.EstaVacia())
@@ -749,14 +791,17 @@ func TestIteradorExternoConTipoDeDatoEntero(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		lista.InsertarUltimo(i)
 	}
-	contador := 0
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 0; it.HaySiguiente(); contador++ {
 		if contador%2 == 0 {
 			require.Equal(t, it.Borrar(), contador)
 		} else {
 			it.Siguiente()
 		}
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	require.Equal(t, lista.Largo(), 10/2)
 	for i := 1; i < 10; i += 2 {
 		require.False(t, lista.EstaVacia())
@@ -772,14 +817,17 @@ func TestIteradorExternoConTipoDeDatoString(t *testing.T) {
 	for i := 0; i < len(arr); i++ {
 		lista.InsertarUltimo(arr[i])
 	}
-	contador := 0
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 0; it.HaySiguiente(); contador++ {
 		if contador%2 == 0 {
 			require.Equal(t, it.Borrar(), arr[contador])
 		} else {
 			it.Siguiente()
 		}
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	require.Equal(t, lista.Largo(), len(arr)/2)
 	for i := 1; i < len(arr); i += 2 {
 		require.False(t, lista.EstaVacia())
@@ -795,14 +843,17 @@ func TestIteradorExternoConTipoDeDatoRuna(t *testing.T) {
 	for i := 0; i < len(arr); i++ {
 		lista.InsertarUltimo(arr[i])
 	}
-	contador := 0
-	for it := lista.Iterador(); it.HaySiguiente(); contador++ {
+	it := lista.Iterador()
+	for contador := 0; it.HaySiguiente(); contador++ {
 		if contador%2 == 0 {
 			require.Equal(t, it.Borrar(), arr[contador])
 		} else {
 			it.Siguiente()
 		}
 	}
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Borrar() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.Siguiente() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_FIN_DE_ITERACION, func() { it.VerActual() }, _MENSAJE_TESTING_PANIC_FIN_DE_ITERACION)
 	require.Equal(t, lista.Largo(), len(arr)/2)
 	for i := 1; i < len(arr); i += 2 {
 		require.False(t, lista.EstaVacia())
