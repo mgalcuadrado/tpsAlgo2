@@ -1,9 +1,43 @@
+/* **************** PRIMERA PROPUESTA *********** */
+
+
+//esta función recibe y devuelve string, así que me complica un poco las operaciones
+
+
 import (
     "crypto/sha256"
     "encoding/hex"
 )
 
-func hashSHA256(key string) string {
+//función proveída por el paquete SHA256 de golang: https://pkg.go.dev/crypto/sha256
+func hashSHA256(key string) string { 
     h := sha256.New()
     h.Write([]byte(key))
     return hex.EncodeToString(h.Sum(nil))
+}
+
+
+/* **************** ALTERNATIVA *********** */
+
+import (
+	"fmt"
+)
+
+// fnv1aHash calcula el hash FNV-1a de un arreglo de bytes y devuelve un entero de 32 bits
+func fnv1aHash(data []byte) uint32 {
+	const FNV_prime uint32 = 0x1000193
+	const offset_basis uint32 = 0x811C9DC5
+
+	// Iniciar el hash con el offset basis
+	hash := offset_basis
+
+	// Iterar sobre cada byte en el array de bytes
+	for _, b := range data {
+		// XOR el byte actual con el hash
+		hash ^= uint32(b)
+		// Multiplicar por el prime (FNV prime)
+		hash *= FNV_prime
+	}
+
+	return hash
+}
