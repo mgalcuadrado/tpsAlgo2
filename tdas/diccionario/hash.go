@@ -1,8 +1,7 @@
 package diccionario
 
 import (
-    "crypto/sha256"
-    "encoding/hex"
+    "fmt"
 )
 
 /* **************** DEFINICIÓN DE VARIABLES **************** */
@@ -47,6 +46,7 @@ type iterHashCerrado[K comparable, V any] struct {
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	hash := new(hashCerrado[K, V])
 	hash.celdas = make([]celda[K, V], _CANTIDAD_INICIAL)
+	hash.largo = _CANTIDAD_INICIAL 
 	return hash
 }
 
@@ -56,31 +56,21 @@ func (hash *hashCerrado[K, V]) Guardar(clave K, dato V) {
 		return
 	}
 	//acá vamos a tener el if para redimensionar!
-	posicion := hash.buscar(clave)
-	if posicion != -1 {
+	pertenece, posicion := hash.buscar(clave)
+	if pertenece {
 		hash.celdas[posicion].valor = dato
 	} else {
 		hash.celdas[posicion].estado = _OCUPADO
 		hash.celdas[posicion].clave = clave
 		hash.celdas[posicion].valor = dato
-		hash.cantElem++
+		hash.cantElem++ //mantengo invariante de representación
 	}
 }
 
-func (hash * hashCerrado[K,V]) hallarPosicionDisponible(clave K) int {
-	posicion := hash.buscar(clave)
-	for ; hash.celdas[posicion].estado != _VACIO; {
-		if posicion == len(hash.celdas) {
-			posicion = 0
-		} else {
-			posicion++
-		}
-	}
-	return posicion
-}
 
 func (hash *hashCerrado[K, V]) Pertenece(clave K) bool {
-	return hash.buscar(clave) != -1
+	pertenece, _ := hash.buscar(clave)
+	return pertenece
 }
 
 func (hash *hashCerrado[K, V]) Obtener(clave K) V {
@@ -98,8 +88,11 @@ func (hash *hashCerrado[K, V]) Borrar(clave K) V {
 }
 
 func (hash *hashCerrado[K, V]) verificarPosicion(clave K) int {
-	posicion := hash.buscar(clave)
-	if posicion == -1 {
+	if hash.Cantidad() == 0 {
+		panic(_MENSAJE_PANIC_CLAVE_NO_PERTENECE_A_DICCIONARIO)
+	}
+	pertenece, posicion := hash.buscar(clave)
+	if !pertenece {
 		panic(_MENSAJE_PANIC_CLAVE_NO_PERTENECE_A_DICCIONARIO)
 	}
 	return posicion
@@ -114,39 +107,59 @@ func (hash *hashCerrado[K, V]) redimensionarHash() {
 
 }
 
-// funcionDeHashing recibe la clave y devuelve un entero 
-func (hash *hashCerrado[K, V]) funcionDeHashing(clave comparable) int {
-	return hashSHA256(clave) % hash.largo
+func convertirABytes[K comparable](clave K) []byte {
+	return []byte(fmt.Sprintf("%v", clave))
 }
 
-//función proveída por el paquete SHA256 de golang: https://pkg.go.dev/crypto/sha256
-func hashSHA256(key string) string { //esta función recibe y devuelve string, así que me complica un poco las operaciones
-    h := sha256.New()
-    h.Write([]byte(key))
-    return hex.EncodeToString(h.Sum(nil))
+// funcionDeHashing recibe la clave y devuelve un entero 
+func (hash *hashCerrado[K, V]) funcionDeHashing(clave K) int {
+	claveEnBytes := convertirABytes[K](clave)
+	return int(fnv1aHash(claveEnBytes)) % hash.largo
 }
+
+
+
+func fnv1aHash(data []byte) uint32 {
+	const FNV_prime uint32 = 0x1000193
+	const offset_basis uint32 = 0x811C9DC5
+
+	// Iniciar el hash con el offset basis
+	hash := offset_basis
+
+	// Iterar sobre cada byte en el array de bytes
+	for _, b := range data {
+		// XOR el byte actual con el hash
+		hash ^= uint32(b)
+		// Multiplicar por el prime (FNV prime)
+		hash *= FNV_prime
+	}
+
+	return hash
+}
+
 
 // buscar recibe la clave y la busca en el arreglo de celdas. Devuelve la posición en la que esa clave se encuentra en el arreglo. Si no está devuelve -1
-func (hash *hashCerrado[K, V]) buscar(clave comparable) int {
-	posicion := hash.funcionDeHashing (clave)
+func (hash *hashCerrado[K, V]) buscar(clave K) (bool, int) {
+	posicion := hash.funcionDeHashing(clave)
 	indice := posicion //una vez que haya redimensión sacamos esto pero mientras lo dejo para que no se rompa nada
-	if hash.cantElem == 0 || hash.celdas[posicion].estado == _VACIO { //si no hay elementos en el hash o la celda en la que debería estar esa clave está vacía, entonces no está la clave
-		return -1
+	if hash.celdas[posicion].estado == _VACIO { //si no hay elementos en el hash o la celda en la que debería estar esa clave está vacía, entonces no está la clave
+		return false, posicion
 	}
 	for hash.celdas[indice].estado != _VACIO {
-		if indice == len(hash.celdas) {
+		
+		if hash.celdas[indice].estado == _OCUPADO && hash.celdas[indice].clave == clave {
+			return true, indice
+		}
+		if indice == len(hash.celdas) - 1 {
 			indice = 0
 		} else {
 			indice++
 		}
 		if indice == posicion{ //una vez que haya redimensión esto nunca debería pasar pero mientras lo dejo para que no se rompa nada
-			return -1
-		}
-		if hash.celdas[indice].estado == _OCUPADO && hash.celdas[indice].clave == clave {
-			return indice
+			return false, posicion
 		}
 	}
-	return -1
+	return false, indice
 	 
 
 }
