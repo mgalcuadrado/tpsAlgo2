@@ -8,7 +8,7 @@ import (
 const (
 	_MENSAJE_PANIC_CLAVE_NO_PERTENECE_A_DICCIONARIO      string = "La clave no pertenece al diccionario"
 	_MENSAJE_PANIC_FIN_DE_ITERACION string = "El iterador termino de iterar"
-	
+
 	_FACTOR_DE_CARGA float64 = 0.7 //esto lo podemos modificar
 	_CANTIDAD_INICIAL int = 53
 	_MULTIPLICADOR_DE_INCREMENTO_DE_CANTIDAD int = 2
@@ -43,11 +43,10 @@ type iterHashCerrado[K comparable, V any] struct {
 }
 
 /* **************** IMPLEMENTACIÓN DEL HASH **************** */
+
+/* **************** FUNCIONES DE LA INTERFACE **************** */
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
-	hash := new(hashCerrado[K, V])
-	hash.celdas = make([]celda[K, V], _CANTIDAD_INICIAL)
-	hash.largo = _CANTIDAD_INICIAL 
-	return hash
+	return crearHash[K,V](_CANTIDAD_INICIAL)
 }
 
 func (hash *hashCerrado[K, V]) Guardar(clave K, dato V) {
@@ -87,6 +86,19 @@ func (hash *hashCerrado[K, V]) Borrar(clave K) V {
 	return hash.celdas[posicion].valor
 }
 
+func (hash *hashCerrado[K, V]) Cantidad() int {
+	return hash.cantElem
+}
+
+/* **************** Funciones Auxiliares **************** */
+
+func crearHash[K comparable, V any](largo int) Diccionario[K, V] {
+	hash := new(hashCerrado[K, V])
+	hash.celdas = make([]celda[K, V], largo)
+	hash.largo = largo 
+	return hash
+}
+
 func (hash *hashCerrado[K, V]) verificarPosicion(clave K) int {
 	if hash.Cantidad() == 0 {
 		panic(_MENSAJE_PANIC_CLAVE_NO_PERTENECE_A_DICCIONARIO)
@@ -98,26 +110,53 @@ func (hash *hashCerrado[K, V]) verificarPosicion(clave K) int {
 	return posicion
 }
 
-
-func (hash *hashCerrado[K, V]) Cantidad() int {
-	return hash.cantElem
+// redimensionarHash recibe el nuevoLargo de la tabla de hashing y reemplaza el hash por el nuevo
+func (hash *hashCerrado[K, V]) redimensionarHash(nuevoLargo int) {
+	hashNuevo := crearHash(nuevoLargo)
+	for i:= 0; i < hash.largo; i++ {
+		if hash.celdas[i].estado == _OCUPADO {
+			hashNuevo.Guardar(hash.celdas[i].clave, hash.celdas[i].valor)
+		}
+	}
+	//acá hash.cantElem == hashNuevo.cantElem siempre
+	hash = hashNuevo
 }
 
-func (hash *hashCerrado[K, V]) redimensionarHash() {
+// buscar recibe la clave y la busca en el arreglo de celdas. Devuelve la posición en la que esa clave se encuentra en el arreglo. Si no está devuelve -1
+func (hash *hashCerrado[K, V]) buscar(clave K) (bool, int) {
+	posicion := funcionDeHashing(clave, hash.largo)
+	indice := posicion //una vez que haya redimensión sacamos esto pero mientras lo dejo para que no se rompa nada
+	if hash.celdas[posicion].estado == _VACIO { //si no hay elementos en el hash o la celda en la que debería estar esa clave está vacía, entonces no está la clave
+		return false, posicion
+	}
+	for hash.celdas[indice].estado != _VACIO {
+		
+		if hash.celdas[indice].estado == _OCUPADO && hash.celdas[indice].clave == clave {
+			return true, indice
+		}
+		if indice == len(hash.celdas) - 1 {
+			indice = 0
+		} else {
+			indice++
+		}
+		if indice == posicion{ //una vez que haya redimensión esto nunca debería pasar pero mientras lo dejo para que no se rompa nada
+			return false, posicion
+		}
+	}
+	return false, indice
+}
 
+/* **************** Función de hashing **************** */
+
+// funcionDeHashing recibe la clave y devuelve un entero 
+func funcionDeHashing(clave K, largo int) int {
+	claveEnBytes := convertirABytes[K](clave)
+	return int(fnv1aHash(claveEnBytes)) % largo
 }
 
 func convertirABytes[K comparable](clave K) []byte {
 	return []byte(fmt.Sprintf("%v", clave))
 }
-
-// funcionDeHashing recibe la clave y devuelve un entero 
-func (hash *hashCerrado[K, V]) funcionDeHashing(clave K) int {
-	claveEnBytes := convertirABytes[K](clave)
-	return int(fnv1aHash(claveEnBytes)) % hash.largo
-}
-
-
 
 func fnv1aHash(data []byte) uint32 {
 	const FNV_prime uint32 = 0x1000193
@@ -138,31 +177,7 @@ func fnv1aHash(data []byte) uint32 {
 }
 
 
-// buscar recibe la clave y la busca en el arreglo de celdas. Devuelve la posición en la que esa clave se encuentra en el arreglo. Si no está devuelve -1
-func (hash *hashCerrado[K, V]) buscar(clave K) (bool, int) {
-	posicion := hash.funcionDeHashing(clave)
-	indice := posicion //una vez que haya redimensión sacamos esto pero mientras lo dejo para que no se rompa nada
-	if hash.celdas[posicion].estado == _VACIO { //si no hay elementos en el hash o la celda en la que debería estar esa clave está vacía, entonces no está la clave
-		return false, posicion
-	}
-	for hash.celdas[indice].estado != _VACIO {
-		
-		if hash.celdas[indice].estado == _OCUPADO && hash.celdas[indice].clave == clave {
-			return true, indice
-		}
-		if indice == len(hash.celdas) - 1 {
-			indice = 0
-		} else {
-			indice++
-		}
-		if indice == posicion{ //una vez que haya redimensión esto nunca debería pasar pero mientras lo dejo para que no se rompa nada
-			return false, posicion
-		}
-	}
-	return false, indice
-	 
 
-}
  
 /* **************** IMPLEMENTACIÓN DEL ITERADOR INTERNO **************** */
 
