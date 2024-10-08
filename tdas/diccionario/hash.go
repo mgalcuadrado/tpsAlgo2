@@ -38,9 +38,9 @@ type hashCerrado[K comparable, V any] struct {
 	cantBorrados int
 }
 
-type iterHashCerrado[K comparable, V any] struct {
-	hash   hashCerrado[K, V]
-	indice int
+type IterHashCerrado[K comparable, V any] struct {
+	hash          *hashCerrado[K, V]
+	indice_actual int
 }
 
 /* **************** IMPLEMENTACIÓN DEL HASH **************** */
@@ -180,24 +180,45 @@ func fnv1aHash(data []byte) uint32 {
 
 /* **************** IMPLEMENTACIÓN DEL ITERADOR INTERNO **************** */
 
-func (hash *hashCerrado[K, V]) Iterar(func(clave K, dato V) bool) {
+/* **************** IMPLEMENTACIÓN DEL ITERADOR INTERNO **************** */
 
+func (hash *hashCerrado[K, V]) Iterar(visitar func(clave K, dato V) bool) {
+	for i := 0; i < hash.largo; i++ {
+		if hash.celdas[i].estado == _OCUPADO {
+			if !visitar(hash.celdas[i].clave, hash.celdas[i].valor) {
+				return
+			}
+		}
+	}
 }
 
 /* **************** IMPLEMENTACIÓN DEL ITERADOR EXTERNO **************** */
-/*
-func (hash *hashCerrado[K, V]) Iterador() IterDiccionario[K, V] {
 
+func (hash *hashCerrado[K, V]) Iterador() IterHashCerrado[K, V] {
+	iterador := new(IterDiccionario[K, V])
+	iterador.hash = hash
+	iterador.indice_actual = 0
 }
 
-func (*iterHashCerrado[K, V])HaySiguiente() bool {
-	return true
+func (iterador *IterHashCerrado[K, V]) HaySiguiente() bool {
+	return iterador.hash.celdas[iterador.indice_actual].estado == _OCUPADO
 }
 
-func (*iterHashCerrado[K, V])VerActual() (K, V) {
-
+func (iterador *IterHashCerrado[K, V]) VerActual() (K, V) {
+	if !iterador.HaySiguiente() {
+		panic(_MENSAJE_PANIC_FIN_DE_ITERACION)
+	}
+	return iterador.hash.celdas[iterador.indice_actual].clave, iterador.hash.celdas[iterador.indice_actual].valor
 }
-func (*iterHashCerrado[K, V]) Siguiente() {
 
+func (iterador *IterHashCerrado[K, V]) Siguiente() {
+	iterador.indice_actual++
+
+	for iterador.indice_actual != iterador.hash.largo-1 {
+		if iterador.hash.celdas[iterador.indice_actual].estado == _OCUPADO {
+			return
+		}
+	}
+
+	panic(_MENSAJE_PANIC_FIN_DE_ITERACION)
 }
-*/
