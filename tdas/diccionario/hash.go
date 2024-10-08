@@ -194,10 +194,11 @@ func (hash *hashCerrado[K, V]) Iterar(visitar func(clave K, dato V) bool) {
 
 /* **************** IMPLEMENTACIÓN DEL ITERADOR EXTERNO **************** */
 
-func (hash *hashCerrado[K, V]) Iterador() IterHashCerrado[K, V] {
-	iterador := new(IterDiccionario[K, V])
+func (hash *hashCerrado[K, V]) Iterador() *IterHashCerrado[K, V] {
+	iterador := new(IterHashCerrado[K, V])
 	iterador.hash = hash
 	iterador.indice_actual = 0
+	return iterador
 }
 
 func (iterador *IterHashCerrado[K, V]) HaySiguiente() bool {
