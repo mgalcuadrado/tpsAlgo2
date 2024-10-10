@@ -184,25 +184,23 @@ func fnv1aHash(data []byte) uint32 {
 
 func (hash *hashCerrado[K, V]) Iterar(visitar func(clave K, dato V) bool) {
 	for i := 0; i < hash.largo; i++ {
-		if hash.celdas[i].estado == _OCUPADO {
-			if !visitar(hash.celdas[i].clave, hash.celdas[i].valor) {
-				return
-			}
+		if hash.celdas[i].estado == _OCUPADO && !visitar(hash.celdas[i].clave, hash.celdas[i].valor) {
+			return
 		}
 	}
 }
 
 /* **************** IMPLEMENTACIÓN DEL ITERADOR EXTERNO **************** */
 
-func (hash *hashCerrado[K, V]) Iterador() *IterHashCerrado[K, V] {
+func (hash *hashCerrado[K, V]) Iterador() IterDiccionario[K, V] {
 	iterador := new(IterHashCerrado[K, V])
 	iterador.hash = hash
-	iterador.indice_actual = 0
+	iterador.indice_actual = iterador.indiceDelSiguiente(true)
 	return iterador
 }
 
 func (iterador *IterHashCerrado[K, V]) HaySiguiente() bool {
-	return iterador.hash.celdas[iterador.indice_actual].estado == _OCUPADO
+	return iterador.indice_actual != iterador.hash.largo
 }
 
 func (iterador *IterHashCerrado[K, V]) VerActual() (K, V) {
@@ -213,13 +211,25 @@ func (iterador *IterHashCerrado[K, V]) VerActual() (K, V) {
 }
 
 func (iterador *IterHashCerrado[K, V]) Siguiente() {
-	iterador.indice_actual++
+	if !iterador.HaySiguiente() {
+		panic(_MENSAJE_PANIC_FIN_DE_ITERACION)
+	} else {
+		iterador.indice_actual = iterador.indiceDelSiguiente(false)
+	}
+}
 
-	for iterador.indice_actual != iterador.hash.largo-1 {
-		if iterador.hash.celdas[iterador.indice_actual].estado == _OCUPADO {
-			return
-		}
+// esta función interna devuelve el índice en el que está el siguiente elemento válido. Si indice = hash.largo entonces no hay siguiente
+func (iterador *IterHashCerrado[K, V]) indiceDelSiguiente(inicio bool) int {
+	if iterador.indice_actual == iterador.hash.largo {
+		return iterador.indice_actual
 	}
 
-	panic(_MENSAJE_PANIC_FIN_DE_ITERACION)
+	indice := iterador.indice_actual
+	if !inicio {
+		indice++
+	}
+	for (indice < iterador.hash.largo) && iterador.hash.celdas[indice].estado != _OCUPADO {
+		indice++
+	}
+	return indice
 }
