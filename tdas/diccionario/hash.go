@@ -129,10 +129,9 @@ func (hash *hashCerrado[K, V]) redimensionarHash(nuevoLargo int) {
 
 // buscar recibe la clave y la busca en el arreglo de celdas. Devuelve un booleano indicando si la clave se halló en el arreglo y la posición en la que esa clave se encuentra en el arreglo.
 func (hash *hashCerrado[K, V]) buscar(clave K) (bool, int) {
-	posicion := funcionDeHashing(clave, hash.largo)
-	indice := posicion                          //una vez que haya redimensión sacamos esto pero mientras lo dejo para que no se rompa nada
-	if hash.celdas[posicion].estado == _VACIO { //si no hay elementos en el hash o la celda en la que debería estar esa clave está vacía, entonces no está la clave
-		return false, posicion
+	indice := funcionDeHashing(clave, hash.largo)
+	if hash.celdas[indice].estado == _VACIO { //si no hay elementos en el hash o la celda en la que debería estar esa clave está vacía, entonces no está la clave
+		return false, indice
 	}
 	for hash.celdas[indice].estado != _VACIO {
 
@@ -143,9 +142,6 @@ func (hash *hashCerrado[K, V]) buscar(clave K) (bool, int) {
 			indice = 0
 		} else {
 			indice++
-		}
-		if indice == posicion { //una vez que haya redimensión esto nunca debería pasar pero mientras lo dejo para que no se rompa nada
-			return false, posicion
 		}
 	}
 	return false, indice
