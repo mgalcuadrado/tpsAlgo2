@@ -22,11 +22,7 @@ type listaEnlazada[T any] struct {
 /* ****************  IMPLEMENTACIÓN DE LA LISTA **************** */
 
 func CrearListaEnlazada[T any]() Lista[T] {
-	lista := new(listaEnlazada[T])
-	lista.primero = nil //si bien el lenguaje lo declara de esta manera, se explicitan las invariantes de representación
-	lista.ultimo = nil
-	lista.largo = 0
-	return lista
+	return &listaEnlazada[T]{primero: nil, ultimo: nil, largo: 0}
 }
 
 func crearNodo[T any](dato T) *nodoLista[T] {
