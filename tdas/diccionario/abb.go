@@ -3,7 +3,7 @@ package diccionario
 import (
 	"fmt"
 )
-
+//por qué los llamas ab y no abb?
 type nodoAB[K comparable, V any] struct {
     clave   K
     valor   V
