@@ -24,7 +24,7 @@ type Diccionario[K comparable, V any] interface {
 	Iterar(func(clave K, dato V) bool)
 
 	// Iterador devuelve un IterDiccionario para este Diccionario
-	//Iterador() IterDiccionario[K, V] //comento esto para poder correr las pruebas
+	Iterador() IterDiccionario[K, V] //comento esto para poder correr las pruebas
 }
 
 type IterDiccionario[K comparable, V any] interface {
