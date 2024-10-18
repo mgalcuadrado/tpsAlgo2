@@ -22,17 +22,11 @@ type listaEnlazada[T any] struct {
 /* ****************  IMPLEMENTACIÓN DE LA LISTA **************** */
 
 func CrearListaEnlazada[T any]() Lista[T] {
-	lista := new(listaEnlazada[T])
-	lista.primero = nil //si bien el lenguaje lo declara de esta manera, se explicitan las invariantes de representación
-	lista.ultimo = nil
-	lista.largo = 0
-	return lista
+	return &listaEnlazada[T]{primero: nil, ultimo: nil, largo: 0}
 }
 
-func crearNodo[T any](dato T) *nodoLista[T] {
-	nodoNuevo := new(nodoLista[T])
-	nodoNuevo.dato = dato
-	return nodoNuevo
+func crearNodo[T any](dato T, siguiente *nodoLista[T]) *nodoLista[T] {
+	return &nodoLista[T]{dato: dato, siguiente: siguiente}
 }
 
 func (lista *listaEnlazada[T]) EstaVacia() bool {
@@ -40,8 +34,8 @@ func (lista *listaEnlazada[T]) EstaVacia() bool {
 }
 
 func (lista *listaEnlazada[T]) InsertarPrimero(valor T) {
-	nodoNuevo := crearNodo[T](valor)
-	nodoNuevo.siguiente = lista.primero
+	nodoNuevo := crearNodo[T](valor, lista.primero)
+
 	if lista.EstaVacia() {
 		lista.ultimo = nodoNuevo
 	}
@@ -50,11 +44,10 @@ func (lista *listaEnlazada[T]) InsertarPrimero(valor T) {
 }
 
 func (lista *listaEnlazada[T]) InsertarUltimo(valor T) {
-	nodoNuevo := crearNodo[T](valor)
+	nodoNuevo := crearNodo[T](valor, nil)
+
 	if lista.EstaVacia() {
 		lista.primero = nodoNuevo
-	} else if lista.largo == 1 {
-		lista.primero.siguiente = nodoNuevo
 	} else {
 		lista.ultimo.siguiente = nodoNuevo
 	}
@@ -63,9 +56,7 @@ func (lista *listaEnlazada[T]) InsertarUltimo(valor T) {
 }
 
 func (lista *listaEnlazada[T]) BorrarPrimero() T {
-	if lista.EstaVacia() {
-		panic(_MENSAJE_PANIC_LISTA_VACIA)
-	}
+	lista.verificarListaNoVacia()
 	prim := lista.primero
 	lista.primero = lista.primero.siguiente
 	lista.largo--
@@ -73,16 +64,12 @@ func (lista *listaEnlazada[T]) BorrarPrimero() T {
 }
 
 func (lista *listaEnlazada[T]) VerPrimero() T {
-	if lista.EstaVacia() {
-		panic(_MENSAJE_PANIC_LISTA_VACIA)
-	}
+	lista.verificarListaNoVacia()
 	return lista.primero.dato
 }
 
 func (lista *listaEnlazada[T]) VerUltimo() T {
-	if lista.EstaVacia() {
-		panic(_MENSAJE_PANIC_LISTA_VACIA)
-	}
+	lista.verificarListaNoVacia()
 	return lista.ultimo.dato
 }
 
@@ -90,14 +77,15 @@ func (lista *listaEnlazada[T]) Largo() int {
 	return lista.largo
 }
 
+func (lista *listaEnlazada[T]) verificarListaNoVacia() {
+	if lista.EstaVacia() {
+		panic(_MENSAJE_PANIC_LISTA_VACIA)
+	}
+}
+
 /* ****************  IMPLEMENTACIÓN DEL ITERADOR INTERNO **************** */
 func (lista *listaEnlazada[T]) Iterar(visitar func(T) bool) {
-	actual := lista.primero
-	for actual != nil {
-		if !visitar(actual.dato) {
-			return
-		}
-		actual = actual.siguiente
+	for actual := lista.primero; actual != nil && visitar(actual.dato); actual = actual.siguiente {
 	}
 }
 
@@ -123,40 +111,39 @@ func (it *iteradorLista[T]) HaySiguiente() bool {
 }
 
 func (it *iteradorLista[T]) VerActual() T {
-	if !it.HaySiguiente() {
-		panic(_MENSAJE_PANIC_FIN_DE_ITERACION)
-	}
+	it.verificarHaySiguiente()
 	return it.actual.dato
 }
 
 func (it *iteradorLista[T]) Siguiente() {
-	if !it.HaySiguiente() {
-		panic(_MENSAJE_PANIC_FIN_DE_ITERACION)
-	}
+	it.verificarHaySiguiente()
 	it.anterior = it.actual
 	it.actual = it.actual.siguiente
 }
 
 func (it *iteradorLista[T]) Insertar(dato T) {
-	if it.anterior == nil { //si el anterior es nil estoy insertando al principio, reuso primitiva de la pila
-		it.lista.InsertarPrimero(dato) //acá ya se suma a largo directamente
-		it.actual = it.lista.primero
+	nuevoNodo := crearNodo(dato, nil)
+
+	if it.anterior == nil {
+		nuevoNodo.siguiente = it.lista.primero
+		it.lista.primero = nuevoNodo
 	} else {
-		nuevoNodo := crearNodo[T](dato)
 		nuevoNodo.siguiente = it.actual
 		it.anterior.siguiente = nuevoNodo
-		it.actual = nuevoNodo
-		it.lista.largo++ //invariante de representación
 	}
+
+	it.actual = nuevoNodo
+
 	if it.actual.siguiente == nil {
 		it.lista.ultimo = it.actual
 	}
+
+	it.lista.largo++
+
 }
 
 func (it *iteradorLista[T]) Borrar() T {
-	if !it.HaySiguiente() {
-		panic(_MENSAJE_PANIC_FIN_DE_ITERACION)
-	}
+	it.verificarHaySiguiente()
 	borrado := it.actual.dato
 	if it.actual == it.lista.primero { //acá anterior vale nil y el siguiente al actual puede o no ser nil
 		it.lista.primero = it.actual.siguiente
@@ -168,4 +155,10 @@ func (it *iteradorLista[T]) Borrar() T {
 	it.actual = it.actual.siguiente //para el primero eso es el que ahora es el primero, para el último eso es nil, para los demás casos va bien
 	it.lista.largo--                //invariante de representación
 	return borrado
+}
+
+func (it *iteradorLista[T]) verificarHaySiguiente() {
+	if !it.HaySiguiente() {
+		panic(_MENSAJE_PANIC_FIN_DE_ITERACION)
+	}
 }
