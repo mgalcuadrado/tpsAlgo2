@@ -195,6 +195,7 @@ func (hash *hashCerrado[K, V]) Iterador() IterDiccionario[K, V] {
 	iterador := new(iterHashCerrado[K, V])
 	iterador.hash = hash
 	iterador.avanzarAlSiguienteOcupado()
+	iterador.avanzarAlSiguienteOcupado()
 	return iterador
 }
 
@@ -212,6 +213,8 @@ func (iterador *iterHashCerrado[K, V]) VerActual() (K, V) {
 // Siguiente avanza el iterador a la siguiente posición ocupada del hash. Si se terminó la iteración da panic
 func (iterador *iterHashCerrado[K, V]) Siguiente() {
 	iterador.verificarSiguiente()
+	iterador.indice_actual++
+	iterador.avanzarAlSiguienteOcupado()
 	iterador.indice_actual++
 	iterador.avanzarAlSiguienteOcupado()
 }
