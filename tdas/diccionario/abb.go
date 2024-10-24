@@ -1,5 +1,10 @@
 package diccionario
 
+import TDAPila "tdas/pila"
+
+// _MENSAJE_PANIC_CLAVE_NO_PERTENECE_A_DICCIONARIO string = "La clave no pertenece al diccionario"
+//_MENSAJE_PANIC_FIN_DE_ITERACION                 string = "El iterador termino de iterar"
+
 type nodoABB[K comparable, V any] struct {
 	clave              K
 	valor              V
@@ -12,11 +17,20 @@ type abb[K comparable, V any] struct {
 	cantidad int
 }
 
-type iterador_interno_rango[K comparable, V any] struct {
+type iteradorInternoRango[K comparable, V any] struct {
 	desde   *K
 	hasta   *K
 	visitar func(clave K, dato V) bool
 	cmp     func(K, K) int
+}
+
+type iteradorExternoRango[K comparable, V any] struct {
+	desde             *K
+	hasta             *K
+	cmp               func(K, K) int
+	actual            **nodoABB[K, V]
+	pila              TDAPila.Pila[**nodoABB[K, V]]
+	verificador_rango func(K) int
 }
 
 func CrearABB[K comparable, V any](funcion_cmp func(K, K) int) DiccionarioOrdenado[K, V] {
@@ -164,7 +178,7 @@ func (ab *abb[K, V]) insertarNodo(nodo *nodoABB[K, V], clave K, dato V) *nodoABB
 //Si la clave es mayor
 //Si la clave esta dentro del rango, devuelve 0
 
-func (iter *iterador_interno_rango[K, V]) en_rango(clave K) int {
+func (iter *iteradorInternoRango[K, V]) en_rango(clave K) int {
 	if iter.cmp(clave, *(iter.desde)) < 0 {
 		return -1
 	}
@@ -174,8 +188,8 @@ func (iter *iterador_interno_rango[K, V]) en_rango(clave K) int {
 	return 0
 }
 
-func crearIteradorInternoRango[K comparable, V any](desde *K, hasta *K, visitar func(clave K, dato V) bool, cmp func(K, K) int) *iterador_interno_rango[K, V] {
-	return &iterador_interno_rango[K, V]{
+func crearIteradorInternoRango[K comparable, V any](desde *K, hasta *K, visitar func(clave K, dato V) bool, cmp func(K, K) int) *iteradorInternoRango[K, V] {
+	return &iteradorInternoRango[K, V]{
 		desde:   desde,
 		hasta:   hasta,
 		visitar: visitar,
@@ -193,6 +207,7 @@ func (abb *abb[K, V]) Iterar(visitar func(clave K, dato V) bool) {
 	})
 }
 
+/*
 func (iter *iterador_interno_rango[K, V]) iterador_interno(nodo *nodoABB[K, V], verificador_rango func(K) int) {
 	if nodo == nil {
 		return
@@ -204,7 +219,24 @@ func (iter *iterador_interno_rango[K, V]) iterador_interno(nodo *nodoABB[K, V], 
 		return
 	}
 	iter.iterador_interno(nodo.derecha, verificador_rango)
+} */
 
+func (iter *iteradorInternoRango[K, V]) iterador_interno(nodo *nodoABB[K, V], verificador_rango func(K) int) {
+	if nodo == nil {
+		return
+	}
+	verificador := verificador_rango(nodo.clave)
+	if verificador < 0 {
+		iter.iterador_interno(nodo.derecha, verificador_rango)
+	} else if verificador > 0 {
+		iter.iterador_interno(nodo.izquierda, verificador_rango)
+	} else {
+		iter.iterador_interno(nodo.izquierda, verificador_rango)
+		if !iter.visitar(nodo.clave, nodo.valor) {
+			return
+		}
+		iter.iterador_interno(nodo.derecha, verificador_rango)
+	}
 }
 
 func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato V) bool) {
@@ -215,22 +247,96 @@ func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato
 	iter.iterador_interno(abb.raiz, iter.en_rango)
 }
 
-// Iterador devuelve un IterDiccionario para este Diccionario
+func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func(K, K) int, actual **nodoABB[K, V], verificador_rango func(K) int) *iteradorExternoRango[K, V] {
+	iter := &iteradorExternoRango[K, V]{
+		desde:             desde,
+		hasta:             hasta,
+		cmp:               cmp,
+		actual:            nil,
+		pila:              TDAPila.CrearPilaDinamica[**nodoABB[K, V]](),
+		verificador_rango: verificador_rango,
+	}
+	if *actual == nil {
+		return iter
+	}
+	iter.apilarNodosDesdeDerecha(actual)
+	nodo := actual
+	for iter.pila.EstaVacia() {
+		if *nodo == nil {
+			break
+		}
+		iter.apilarNodosDesdeDerecha(nodo)
+		nodo = &((*nodo).derecha)
+	}
+	return iter
+}
 
-//func (abb *abb[K, V]) Iterador() IterDiccionario[K, V] { //comento esto para poder correr las pruebas
-//}
+func (iter *iteradorExternoRango[K, V]) apilarNodosDesdeDerecha(nodo **nodoABB[K, V]) {
+	if iter.verificador_rango((*nodo).clave) == 0 {
+		iter.pila.Apilar(nodo)
+		if iter.actual == nil {
+			iter.actual = nodo
+		}
+	}
+	for (*nodo).izquierda != nil {
+		if iter.verificador_rango((*nodo).clave) == 0 {
+			iter.pila.Apilar(nodo)
+			if iter.actual == nil {
+				iter.actual = nodo
+			}
+		}
+		nodo = &((*nodo).izquierda)
+	}
+}
+
+// Iterador devuelve un IterDiccionario para este Diccionario
+func (abb *abb[K, V]) Iterador() IterDiccionario[K, V] { //comento esto para poder correr las pruebas
+	return crearIteradorExternoRango[K, V](nil, nil, abb.cmp, &abb.raiz, func(K) int {
+		return 0
+	})
+}
 
 // HaySiguiente devuelve si hay más datos para ver. Esto es, si en el lugar donde se encuentra parado
 // el iterador hay un elemento.
-//HaySiguiente() bool
+func (iter *iteradorExternoRango[K, V]) HaySiguiente() bool {
+	return !iter.pila.EstaVacia()
+}
+
+func (iter *iteradorExternoRango[K, V]) verificar_si_HaySiguiente() {
+	if !iter.HaySiguiente() {
+		panic(_MENSAJE_PANIC_FIN_DE_ITERACION)
+	}
+}
 
 // VerActual devuelve la clave y el dato del elemento actual en el que se encuentra posicionado el iterador.
 // Si no HaySiguiente, debe entrar en pánico con el mensaje 'El iterador termino de iterar'
-//VerActual() (K, V)
+func (iter *iteradorExternoRango[K, V]) VerActual() (K, V) {
+	iter.verificar_si_HaySiguiente()
+	actual := *iter.actual
+	return actual.clave, actual.valor
+}
 
 // Siguiente si HaySiguiente avanza al siguiente elemento en el diccionario. Si no HaySiguiente, entonces debe
 // entrar en pánico con mensaje 'El iterador termino de iterar'
-//Siguiente()
+func (iter *iteradorExternoRango[K, V]) Siguiente() {
+	iter.verificar_si_HaySiguiente()
+	nodo := iter.pila.Desapilar()
+	if (*nodo).derecha == nil {
+		return
+	}
+	iter.apilarNodosDesdeDerecha(&((*nodo).derecha))
+	iter.actual = iter.pila.VerTope()
+}
 
 // IteradorRango crea un IterDiccionario que sólo itere por las claves que se encuentren en el rango indicado
-//func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V]
+func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
+	return crearIteradorExternoRango[K, V](desde, hasta, abb.cmp, &abb.raiz, func(clave K) int {
+		if abb.cmp(clave, *desde) < 0 {
+			return -1
+		} else if abb.cmp(clave, *hasta) > 0 {
+			return 1
+		} else {
+			return 0
+		}
+	})
+}
