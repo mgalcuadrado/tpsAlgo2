@@ -2,6 +2,7 @@ package diccionario_test
 
 //para ejecutar las pruebas correr: go test -bench=. -benchmem
 
+//usamos los tests del diccionario provistos por la cátedra modificando lo apropiado para usarlos para el hash, los tests que desarrollamos están en diccionario_ordenado_test.go
 import (
 	"fmt"
 	"strings"
