@@ -36,13 +36,6 @@ type nodoABB[K comparable, V any] struct {
 	izquierda, derecha *nodoABB[K, V]
 }
 
-type _iteradorInternoRango[K comparable, V any] struct {
-	desde   *K
-	hasta   *K
-	visitar func(clave K, dato V) bool
-	cmp     func(K, K) int
-}
-
 /* ************ Funciones de creación de las estructuras ************ */
 func CrearABB[K comparable, V any](funcion_cmp func(K, K) int) DiccionarioOrdenado[K, V] {
 	return &abb[K, V]{
@@ -58,15 +51,6 @@ func crearNodoABB[K comparable, V any](clave K, dato V, izq *nodoABB[K, V], der 
 	nodo.valor = dato
 	nodo.izquierda, nodo.derecha = izq, der
 	return nodo
-}
-
-func crearIteradorInternoRango[K comparable, V any](desde *K, hasta *K, visitar func(clave K, dato V) bool, cmp func(K, K) int) *_iteradorInternoRango[K, V] {
-	return &_iteradorInternoRango[K, V]{
-		desde:   desde,
-		hasta:   hasta,
-		visitar: visitar,
-		cmp:     cmp,
-	}
 }
 
 func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func(K, K) int, raiz *nodoABB[K, V], verificador_rango func(K) int) *iteradorExternoRango[K, V] {
@@ -202,10 +186,10 @@ func (abb *abb[K, V]) Iterar(visitar func(clave K, dato V) bool) {
 	if abb == nil {
 		return
 	}
-	iter := crearIteradorInternoRango[K, V](nil, nil, visitar, abb.cmp)
-	iter.iterador_interno(abb.raiz, func(K) int {
+
+	iterador_interno(abb.raiz, nil, nil, abb.cmp, func(clave K, desde *K, hasta *K, cmp func(K, K) int) int {
 		return 0
-	})
+	}, visitar)
 }
 
 // Iterar recibe una función visitar y visita in-order todos los nodos del árbol cuyas clavesse encuentren entre lo referenciado por desde y hasta mientras que visitar dé true
@@ -213,27 +197,27 @@ func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato
 	if abb == nil {
 		return
 	}
-	iter := crearIteradorInternoRango(desde, hasta, visitar, abb.cmp)
-	iter.iterador_interno(abb.raiz, iter.en_rango)
+
+	iterador_interno(abb.raiz, desde, hasta, abb.cmp, en_rango, visitar)
 }
 
 // iterador_interno recibe un nodo y una función de verificación para saber si la clave analizada se encuentra o no en el rango
 // no se incluye en la estructura para evitar una dependencia circular, pues puede depender de los límites del rango guardados en el iterador (desde y hasta)
-func (iter *_iteradorInternoRango[K, V]) iterador_interno(nodo *nodoABB[K, V], verificador_rango func(K) int) bool {
+func iterador_interno[K comparable, V any](nodo *nodoABB[K, V], desde *K, hasta *K, cmp func(K, K) int, verificador_rango func(clave K, desde *K, hasta *K, cmp func(K, K) int) int, visitar func(clave K, dato V) bool) bool {
 	if nodo == nil {
 		return true
 	}
-	verificador := verificador_rango(nodo.clave)
+	verificador := verificador_rango(nodo.clave, desde, hasta, cmp)
 	if verificador < 0 {
-		if !iter.iterador_interno(nodo.derecha, verificador_rango) {
+		if !iterador_interno(nodo.derecha, desde, hasta, cmp, verificador_rango, visitar) {
 			return false
 		}
 	} else if verificador > 0 {
-		if !iter.iterador_interno(nodo.izquierda, verificador_rango) {
+		if !iterador_interno(nodo.izquierda, desde, hasta, cmp, verificador_rango, visitar) {
 			return false
 		}
 	} else {
-		if !iter.iterador_interno(nodo.izquierda, verificador_rango) || !iter.visitar(nodo.clave, nodo.valor) || !iter.iterador_interno(nodo.derecha, verificador_rango) {
+		if !iterador_interno(nodo.izquierda, desde, hasta, cmp, verificador_rango, visitar) || !visitar(nodo.clave, nodo.valor) || !iterador_interno(nodo.derecha, desde, hasta, cmp, verificador_rango, visitar) {
 			return false
 		}
 	}
@@ -244,12 +228,12 @@ func (iter *_iteradorInternoRango[K, V]) iterador_interno(nodo *nodoABB[K, V], v
 // Si la clave es menor al inicio del intervalo, devuelve -1
 // Si la clave es mayor al fin del intervalo, devuelve 1
 // Si la clave esta dentro del rango, devuelve 0
-func (iter *_iteradorInternoRango[K, V]) en_rango(clave K) int {
+func en_rango[K comparable](clave K, desde *K, hasta *K, cmp func(K, K) int) int {
 
-	if iter.desde != nil && iter.cmp(clave, *(iter.desde)) < 0 {
+	if desde != nil && cmp(clave, *desde) < 0 {
 		return -1
 	}
-	if iter.hasta != nil && iter.cmp(clave, *(iter.hasta)) > 0 {
+	if hasta != nil && cmp(clave, *hasta) > 0 {
 		return 1
 	}
 	return 0
