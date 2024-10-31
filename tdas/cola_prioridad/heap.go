@@ -13,7 +13,6 @@ type colaConPrioridad[T any] struct {
 	cmp      func(T, T) int
 }
 
-
 func CrearHeap[T any](funcion_cmp func(T, T) int) ColaPrioridad[T] {
 	return &colaConPrioridad[T]{
 		datos:    make([]T, _CAPACIDAD_INICIAL),
@@ -58,10 +57,14 @@ func (ccp *colaConPrioridad[T]) VerMax() T {
 func (ccp *colaConPrioridad[T]) Desencolar() T {
 	ccp.verificarValidezDeOperacion()
 	valor := ccp.datos[0]
-
-	swap(&(ccp.datos), 0, ccp.cantidad-1)
+	if ccp.cmp(ccp.datos[0], ccp.datos[ccp.cantidad-1]) != 0 { //si los valores tienen distintas prioridades realizo el swap
+		swap(&(ccp.datos), 0, ccp.cantidad-1)
+	} else { //para respetar FIFO si tienen la misma prioridad muevo todos uno a la izquierda (O(n), brutal)
+		for i := 1; i < ccp.cantidad; i++ {
+			swap(&(ccp.datos), i-1, i)
+		}
+	}
 	ccp.cantidad--
-
 	if ccp.cantidad > _CAPACIDAD_INICIAL && ccp.cantidad == cap(ccp.datos)/_INDICADOR_CAPACIDAD {
 		ccp.redimensionar(cap(ccp.datos) / _FACTOR_REDIM)
 	}
@@ -138,7 +141,7 @@ func downheap[T any](pos int, arr *[]T, cmp func(T, T) int, cantidad int) {
 	}
 
 	// Si el hijo mayor es mas grande que el padre, intercambio
-	if cmp((*arr)[pos], (*arr)[posMayor]) <= 0 {
+	if cmp((*arr)[pos], (*arr)[posMayor]) < 0 {
 		swap(arr, pos, posMayor)
 		downheap(posMayor, arr, cmp, cantidad)
 	}
