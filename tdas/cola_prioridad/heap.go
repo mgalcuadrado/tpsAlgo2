@@ -13,6 +13,7 @@ type colaConPrioridad[T any] struct {
 	cmp      func(T, T) int
 }
 
+
 func CrearHeap[T any](funcion_cmp func(T, T) int) ColaPrioridad[T] {
 	return &colaConPrioridad[T]{
 		datos:    make([]T, _CAPACIDAD_INICIAL),
@@ -118,20 +119,28 @@ func (ccp *colaConPrioridad[T]) upheap(pos int) {
 	ccp.upheap(posPadre)
 }
 
-// downheap recibe una posición pos, un puntero a un arreglo arr, una función de comparación cmp y la cantidad de elementos del arreglo cantidad y le realiza downheap en esa posición
 func downheap[T any](pos int, arr *[]T, cmp func(T, T) int, cantidad int) {
 	posHijoIzq := hallarPosicionHijoIzquierdo(pos)
 	posHijoDer := hallarPosicionHijoDerecho(pos)
-	if posHijoDer >= cantidad && posHijoIzq >= cantidad {
+
+	// Si no tiene hijos, termina
+	if posHijoIzq >= cantidad {
 		return
 	}
-	//si solo tiene un hijo, ese hijo es el izquierdo
-	if (posHijoDer >= cantidad || cmp((*arr)[posHijoDer], (*arr)[posHijoIzq]) < 0) && cmp((*arr)[pos], (*arr)[posHijoIzq]) < 0 {
-		swap(arr, pos, posHijoIzq)
-		downheap(posHijoIzq, arr, cmp, cantidad)
-	} else if posHijoDer < cantidad && cmp((*arr)[posHijoDer], (*arr)[posHijoIzq]) >= 0 && cmp((*arr)[pos], (*arr)[posHijoDer]) < 0 {
-		swap(arr, pos, posHijoDer)
-		downheap(posHijoDer, arr, cmp, cantidad)
+
+	// Determinamos el hijo con mayor prioridad en empate, priorizamos el izquierdo
+	posMayor := posHijoIzq
+	if posHijoDer < cantidad {
+		// elijo el hijo de mayor prioridad, o el izquierdo en caso de empate
+		if cmp((*arr)[posHijoDer], (*arr)[posHijoIzq]) > 0 {
+			posMayor = posHijoDer
+		}
+	}
+
+	// Si el hijo mayor es mas grande que el padre, intercambio
+	if cmp((*arr)[pos], (*arr)[posMayor]) <= 0 {
+		swap(arr, pos, posMayor)
+		downheap(posMayor, arr, cmp, cantidad)
 	}
 }
 

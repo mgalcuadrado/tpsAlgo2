@@ -54,6 +54,36 @@ func TestColaPrioridadPocosElementos(t *testing.T) {
 	}
 }
 
+func TestColaPrioridadElementosMismaPrioridad(t *testing.T) {
+    cp := TDAColaPrioridad.CrearHeap[int](func(v1, v2 int) int {
+        return 0 // Todos tienen la misma prioridad
+    })
+    valores := []int{1, 2, 3, 4, 5}
+    for _, v := range valores {
+        cp.Encolar(v)
+    }
+    for _, esperado := range valores {
+        require.Equal(t, esperado, cp.Desencolar(), "Los elementos con la misma prioridad deben salir en orden FIFO")
+    }
+    require.True(t, cp.EstaVacia())
+}
+
+func TestColaPrioridadAlternarEncolarDesencolar(t *testing.T) {
+    cp := TDAColaPrioridad.CrearHeap[int](comparacion)
+    cp.Encolar(5)
+    require.Equal(t, 5, cp.VerMax())
+    cp.Encolar(3)
+    require.Equal(t, 5, cp.VerMax())
+    cp.Desencolar()
+    require.Equal(t, 3, cp.VerMax())
+    cp.Encolar(7)
+    require.Equal(t, 7, cp.VerMax())
+    cp.Desencolar()
+    cp.Desencolar()
+    require.True(t, cp.EstaVacia(), "La cola debe estar vacía después de alternar operaciones de encolar y desencolar")
+}
+
+
 func TestColaPrioridadIniciandoConArregloDeEnteros(t *testing.T) {
 	t.Log("Comprueba que se cree bien la cola de prioridad a partir de un arreglo")
 	arreglo := []int{12, 3, 45, 2, 4, 50, 22, 16, 7}
@@ -95,7 +125,7 @@ func ejecutarPruebasVolumenColaPrioridad(b *testing.B, n int) {
 }
 
 func BenchmarkColaPrioridad(b *testing.B) {
-	b.Log("Prueba de stress del Iterador del Diccionario. Prueba guardando distinta cantidad de elementos " +
+	b.Log("Prueba de stress de la cola de prioridad. Prueba guardando distinta cantidad de elementos " +
 		"(muy grandes) b.N elementos, iterarlos todos sin problemas. Se ejecuta cada prueba b.N veces para generar " +
 		"un benchmark")
 	for _, n := range TAMS_VOLUMEN {
@@ -147,7 +177,7 @@ func ejecutarPruebasVolumenHeapSort(b *testing.B, n int) {
 }
 
 func BenchmarkHeapSort(b *testing.B) {
-	b.Log("Prueba de stress del Iterador del Diccionario. Prueba guardando distinta cantidad de elementos " +
+	b.Log("Prueba de stress del heapsort de la cola de prioridad. Prueba guardando distinta cantidad de elementos " +
 		"(muy grandes) b.N elementos, iterarlos todos sin problemas. Se ejecuta cada prueba b.N veces para generar " +
 		"un benchmark")
 	for _, n := range TAMS_VOLUMEN {
