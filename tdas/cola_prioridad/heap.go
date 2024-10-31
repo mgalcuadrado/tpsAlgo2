@@ -1,5 +1,6 @@
 package cola_prioridad
 
+/* ******* DECLARACIÓN DE VARIABLES Y ESTRUCTURAS ********** */
 const (
 	_CAPACIDAD_INICIAL        = 8
 	_FACTOR_REDIM             = 2
@@ -13,6 +14,9 @@ type colaConPrioridad[T any] struct {
 	cmp      func(T, T) int
 }
 
+/* ******* FUNCIONES DEL TDA ********** */
+
+// CrearHeapArr recibe una función de comparación y crea una cola de prioridad
 func CrearHeap[T any](funcion_cmp func(T, T) int) ColaPrioridad[T] {
 	return &colaConPrioridad[T]{
 		datos:    make([]T, _CAPACIDAD_INICIAL),
@@ -20,10 +24,12 @@ func CrearHeap[T any](funcion_cmp func(T, T) int) ColaPrioridad[T] {
 		cantidad: 0,
 	}
 }
+
+// CrearHeapArr recibe un arreglo y una función de comparación y crea una cola de prioridad con los datos de ese arreglo
 func CrearHeapArr[T any](arreglo []T, funcion_cmp func(T, T) int) ColaPrioridad[T] {
 	arr := make([]T, cap(arreglo))
 	copy(arr, arreglo) //copio el arreglo en memoria nueva para no modificarle el arreglo original a Bárbara!
-	heapify(&arr, funcion_cmp)
+	heapify[T](&arr, funcion_cmp)
 	return &colaConPrioridad[T]{
 		datos:    arr,
 		cmp:      funcion_cmp,
@@ -57,19 +63,13 @@ func (ccp *colaConPrioridad[T]) VerMax() T {
 func (ccp *colaConPrioridad[T]) Desencolar() T {
 	ccp.verificarValidezDeOperacion()
 	valor := ccp.datos[0]
-	if ccp.cmp(ccp.datos[0], ccp.datos[ccp.cantidad-1]) != 0 { //si los valores tienen distintas prioridades realizo el swap
-		swap(&(ccp.datos), 0, ccp.cantidad-1)
-	} else { //para respetar FIFO si tienen la misma prioridad muevo todos uno a la izquierda (O(n), brutal)
-		for i := 1; i < ccp.cantidad; i++ {
-			swap(&(ccp.datos), i-1, i)
-		}
-	}
+
+	swap[T](&(ccp.datos), 0, ccp.cantidad-1)
 	ccp.cantidad--
 	if ccp.cantidad > _CAPACIDAD_INICIAL && ccp.cantidad == cap(ccp.datos)/_INDICADOR_CAPACIDAD {
 		ccp.redimensionar(cap(ccp.datos) / _FACTOR_REDIM)
 	}
-
-	downheap(0, &(ccp.datos), ccp.cmp, ccp.cantidad)
+	downheap[T](0, &(ccp.datos), ccp.cmp, ccp.cantidad)
 	return valor
 }
 
@@ -80,14 +80,16 @@ func (ccp *colaConPrioridad[T]) Cantidad() int {
 
 // HeapSort recibe un puntero a un arreglo y una funcion de comparacion y ordena el arreglo de menor a mayor (in-place)
 func HeapSort[T any](elementos *[]T, funcion_cmp func(T, T) int) {
-	heapify(elementos, funcion_cmp)
+	heapify[T](elementos, funcion_cmp)
 	for cantidad := len(*elementos) - 1; cantidad > 0; cantidad-- { //arranco en len - 1 porque trabajo con posiciones hasta -1
-		swap(elementos, 0, cantidad)
-		downheap(0, elementos, funcion_cmp, cantidad)
+		swap[T](elementos, 0, cantidad)
+		downheap[T](0, elementos, funcion_cmp, cantidad)
 	}
 }
 
 /* ******* FUNCIONES AUXILIARES ********** */
+
+// verificarValidezDeOperacion recibe una cola con prioridad y emite panic en caso de no poder realizarse las operaciones para las que se llama a la función como Desencolar o VerMax
 func (ccp *colaConPrioridad[T]) verificarValidezDeOperacion() {
 	if ccp.EstaVacia() {
 		panic(_MENSAJE_PANIC_COLA_VACIA)
@@ -105,7 +107,7 @@ func (ccp *colaConPrioridad[T]) redimensionar(capacidad int) {
 // heapify recibe un puntero a un arreglo y una función de comparación y organiza el arreglo para que cumpla con las propiedades del heap
 func heapify[T any](arreglo *[]T, funcion_cmp func(T, T) int) {
 	for i := cap(*arreglo) - 1; i >= 0; i-- {
-		downheap(i, arreglo, funcion_cmp, len(*arreglo))
+		downheap[T](i, arreglo, funcion_cmp, len(*arreglo))
 	}
 }
 
@@ -117,49 +119,54 @@ func (ccp *colaConPrioridad[T]) upheap(pos int) {
 	}
 	posPadre := hallarPosicionPadre(pos)
 	if ccp.cmp(ccp.datos[pos], ccp.datos[posPadre]) > 0 {
-		swap(&(ccp.datos), pos, posPadre)
+		swap[T](&(ccp.datos), pos, posPadre)
 	}
 	ccp.upheap(posPadre)
 }
 
+// downheap recibe una posición, un puntero a un arreglo, una función de comparación cmp y la cantidad de elementos válidos del arreglo y acomoda el heap con downheap desde la posición pedida
 func downheap[T any](pos int, arr *[]T, cmp func(T, T) int, cantidad int) {
 	posHijoIzq := hallarPosicionHijoIzquierdo(pos)
 	posHijoDer := hallarPosicionHijoDerecho(pos)
 
-	// Si no tiene hijos, termina
+	// Caso base: hoja
 	if posHijoIzq >= cantidad {
 		return
 	}
 
-	// Determinamos el hijo con mayor prioridad en empate, priorizamos el izquierdo
+	// Se determina el hijo con mayor prioridad. En empate se prioriza el izquierdo
 	posMayor := posHijoIzq
 	if posHijoDer < cantidad {
-		// elijo el hijo de mayor prioridad, o el izquierdo en caso de empate
+		// se elige el hijo de mayor prioridad, o el izquierdo en caso de empate
 		if cmp((*arr)[posHijoDer], (*arr)[posHijoIzq]) > 0 {
 			posMayor = posHijoDer
 		}
 	}
 
-	// Si el hijo mayor es mas grande que el padre, intercambio
+	// Si el hijo mayor es mas grande que el padre, se intercambian y se realiza el sucesivo downheap
 	if cmp((*arr)[pos], (*arr)[posMayor]) < 0 {
-		swap(arr, pos, posMayor)
-		downheap(posMayor, arr, cmp, cantidad)
+		swap[T](arr, pos, posMayor)
+		downheap[T](posMayor, arr, cmp, cantidad)
 	}
 }
 
+// swap recibe un puntero a un arreglo y dos posiciones e intercambia los elementos en esas posiciones de lugar
 func swap[T any](arr *[]T, pos1 int, pos2 int) {
 	(*arr)[pos1], (*arr)[pos2] = (*arr)[pos2], (*arr)[pos1]
 
 }
 
+// hallarPosicionHijoIzquierdo devuelve, en base a una posición de un arreglo, en qué posición estaría su hijo izquierdo
 func hallarPosicionHijoIzquierdo(pos int) int {
 	return 2*pos + 1
 }
 
+// hallarPosicionHijoDerecho devuelve, en base a una posición de un arreglo, en qué posición estaría su hijo derecho
 func hallarPosicionHijoDerecho(pos int) int {
 	return 2*pos + 2
 }
 
+// hallarPosicionPadre devuelve, en base a una posición de un arreglo, en qué posición estaría su padre
 func hallarPosicionPadre(pos int) int {
 	return (pos - 1) / 2
 }
