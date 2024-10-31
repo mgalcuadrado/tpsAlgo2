@@ -25,7 +25,7 @@ func CrearHeap[T any](funcion_cmp func(T, T) int) ColaPrioridad[T]{
 	}
 }
 func CrearHeapArr[T any](arreglo []T, funcion_cmp func(T, T) int) ColaPrioridad[T]{
-	heapify(&arreglo)
+	HeapSort(&arreglo, funcion_cmp)
 	return &colaConPrioridad[T]{
 		datos:     arreglo,
 		cmp:      funcion_cmp,
@@ -61,6 +61,7 @@ func (ccp *colaConPrioridad[T]) Desencolar() T {
 	}
 
 	valor:=ccp.datos[0]
+
 	ccp.datos[0],ccp.datos[ccp.cantidad-1]=ccp.datos[ccp.cantidad-1], ccp.datos[0]
 	ccp.cantidad--
 
@@ -80,7 +81,7 @@ func (ccp *colaConPrioridad[T]) Cantidad() int {
 
 //heapsort recibe un arreglo y una funcion de comparacion, y modifica el arreglo de tal manera que cumpla
 //la propiedad de heap
-func HeapSort[T any](elementos []T, funcion_cmp func(T, T) int){
+func HeapSort[T any](elementos *[]T, funcion_cmp func(T, T) int){
 	return
 }
 
@@ -110,14 +111,15 @@ func (ccp *colaConPrioridad[T]) downheap(pos int){
 	if posHijoDer > ccp.cantidad && posHijoIzq > ccp.cantidad {
 		return
 	}
-
+		//se fija si el padre es intercambiable por el hijo derecho o el izquierdo. si no es, no hace nada,
 		if ccp.cmp(ccp.datos[posHijoDer],ccp.datos[posHijoIzq]) >= 0 && ccp.cmp(ccp.datos[pos],ccp.datos[posHijoDer]) < 0 {
 			ccp.datos[pos],ccp.datos[posHijoDer]=ccp.datos[posHijoDer],ccp.datos[pos]
-			ccp.downheap(posHijoDer)
 		} else if ccp.cmp(ccp.datos[posHijoDer],ccp.datos[posHijoIzq]) < 0 && ccp.cmp(ccp.datos[pos],ccp.datos[posHijoIzq]) < 0{
 			ccp.datos[pos],ccp.datos[posHijoIzq]=ccp.datos[posHijoIzq],ccp.datos[pos]
-			ccp.downheap(posHijoIzq)
 		}
+
+	ccp.downheap(posHijoDer)
+	ccp.downheap(posHijoIzq)
 }
 
 //redimensionar recibe la nueva capacidad que se le quiere asignar al arreglo de datos del heap,

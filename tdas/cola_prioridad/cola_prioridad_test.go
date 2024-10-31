@@ -44,4 +44,7 @@ func TestColaPrioridadPocosElementos(t *testing.T) {
 	require.EqualValues(t, 10, cp.Cantidad(), "La cola debe tener 9 elementos ingresados")
 	require.False(t, cp.EstaVacia(), "Una cola sin elementos debe estar vacia")
 	require.EqualValues(t, 9, cp.VerMax(), "El maximo debe ser el elemento mayor ingresado (9)")
+	for j:=9;j>=0;j--{
+		require.EqualValues(t,cp.Desencolar(),j,"Desencolando ciclicamente y descendentemente, desencolar devuelve al desencolado")
+	}
 }
