@@ -65,7 +65,7 @@ func (ccp *colaConPrioridad[T]) Desencolar() T {
 	valor := ccp.VerMax()
 	swap(&(ccp.datos), 0, ccp.cantidad-1)
 	ccp.cantidad--
-	if ccp.cantidad > _CAPACIDAD_INICIAL && ccp.cantidad == cap(ccp.datos)/_INDICADOR_CAPACIDAD {
+	if cap(ccp.datos) > _CAPACIDAD_INICIAL && ccp.cantidad <= (cap(ccp.datos)/_INDICADOR_CAPACIDAD) {
 		ccp.redimensionar(cap(ccp.datos) / _FACTOR_REDIM)
 	}
 	downheap(0, &(ccp.datos), ccp.cmp, ccp.cantidad)
