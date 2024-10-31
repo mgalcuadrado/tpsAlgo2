@@ -1,45 +1,45 @@
 package cola_prioridad
 
-import(
-	"fmt"
+const (
+	_CAPACIDAD_INICIAL        = 8
+	_FACTOR_REDIM             = 2
+	_INDICADOR_CAPACIDAD      = 4
+	_MENSAJE_PANIC_COLA_VACIA = "La cola esta vacia"
 )
 
-const(
-	_CAPACIDAD_INICIAL=8
-	_FACTOR_REDIM=2
-	_INDICADOR_CAPACIDAD=4
-	_MENSAJE_PANIC_COLA_VACIA="La cola esta vacia"
-)
-
-type colaConPrioridad [T any] struct {
-	datos []T	
+type colaConPrioridad[T any] struct {
+	datos    []T
 	cantidad int
-	cmp func(T,T) int
+	cmp      func(T, T) int
 }
 
-func CrearHeap[T any](funcion_cmp func(T, T) int) ColaPrioridad[T]{
+func CrearHeap[T any](funcion_cmp func(T, T) int) ColaPrioridad[T] {
 	return &colaConPrioridad[T]{
-		datos:     make([]T, _CAPACIDAD_INICIAL),
+		datos:    make([]T, _CAPACIDAD_INICIAL),
 		cmp:      funcion_cmp,
 		cantidad: 0,
 	}
 }
-func CrearHeapArr[T any](arreglo []T, funcion_cmp func(T, T) int) ColaPrioridad[T]{
-	HeapSort(&arreglo, funcion_cmp)
+func CrearHeapArr[T any](arreglo []T, funcion_cmp func(T, T) int) ColaPrioridad[T] {
+	arr := make([]T, cap(arreglo))
+	copy(arr, arreglo) //copio el arreglo en memoria nueva para no modificarle el arreglo original a Bárbara!
+	heapify(&arr, funcion_cmp)
 	return &colaConPrioridad[T]{
-		datos:     arreglo,
+		datos:    arr,
 		cmp:      funcion_cmp,
-		cantidad: len(arreglo),
+		cantidad: len(arr),
 	}
 }
 
-func (ccp *colaConPrioridad[T]) EstaVacia() bool{
-	return ccp.cantidad==0
+// EstaVacia indica si la cola de prioridad se encuentra vacía
+func (ccp *colaConPrioridad[T]) EstaVacia() bool {
+	return ccp.cantidad == 0
 }
 
+// Encolar recibe un dato y lo encola en función de su prioridad
 func (ccp *colaConPrioridad[T]) Encolar(dato T) {
-	if ccp.cantidad==cap(ccp.datos){
-		ccp.redimensionar(cap(ccp.datos)*_FACTOR_REDIM)
+	if ccp.cantidad == cap(ccp.datos) {
+		ccp.redimensionar(cap(ccp.datos) * _FACTOR_REDIM)
 	}
 	ccp.datos[ccp.cantidad] = dato
 
@@ -47,95 +47,107 @@ func (ccp *colaConPrioridad[T]) Encolar(dato T) {
 	ccp.cantidad++
 }
 
+// VerMax devuelve el máximo de la cola sin modificarla
 func (ccp *colaConPrioridad[T]) VerMax() T {
-	if ccp.EstaVacia(){
-		panic(_MENSAJE_PANIC_COLA_VACIA)
-	}
+	ccp.verificarValidezDeOperacion()
 	return ccp.datos[0]
 }
 
+// Desencolar saca el elemento de mayor prioridad de la cola y devuelve su valor
 func (ccp *colaConPrioridad[T]) Desencolar() T {
+	ccp.verificarValidezDeOperacion()
+	valor := ccp.datos[0]
 
-	if ccp.EstaVacia(){
-		panic(_MENSAJE_PANIC_COLA_VACIA)
-	}
-
-	valor:=ccp.datos[0]
-
-	ccp.datos[0],ccp.datos[ccp.cantidad-1]=ccp.datos[ccp.cantidad-1], ccp.datos[0]
+	swap(&(ccp.datos), 0, ccp.cantidad-1)
 	ccp.cantidad--
 
-	if ccp.cantidad>_CAPACIDAD_INICIAL && ccp.cantidad==cap(ccp.datos)/_INDICADOR_CAPACIDAD {
-		ccp.redimensionar(cap(ccp.datos)/_FACTOR_REDIM)
+	if ccp.cantidad > _CAPACIDAD_INICIAL && ccp.cantidad == cap(ccp.datos)/_INDICADOR_CAPACIDAD {
+		ccp.redimensionar(cap(ccp.datos) / _FACTOR_REDIM)
 	}
 
-	ccp.downheap(0)
-	ccp.mostrar()
-
+	downheap(0, &(ccp.datos), ccp.cmp, ccp.cantidad)
 	return valor
 }
 
+// Cantidad devuelve la cantidad de elementos en la cola
 func (ccp *colaConPrioridad[T]) Cantidad() int {
 	return ccp.cantidad
 }
 
-//heapsort recibe un arreglo y una funcion de comparacion, y modifica el arreglo de tal manera que cumpla
-//la propiedad de heap
-func HeapSort[T any](elementos *[]T, funcion_cmp func(T, T) int){
-	return
+// HeapSort recibe un puntero a un arreglo y una funcion de comparacion y ordena el arreglo de menor a mayor (in-place)
+func HeapSort[T any](elementos *[]T, funcion_cmp func(T, T) int) {
+	heapify(elementos, funcion_cmp)
+	for cantidad := len(*elementos) - 1; cantidad > 0; cantidad-- { //arranco en len - 1 porque trabajo con posiciones hasta -1
+		swap(elementos, 0, cantidad)
+		downheap(0, elementos, funcion_cmp, cantidad)
+	}
 }
 
-/********FUNCIONES AUXILIARES***********/
-
-//upheap recibe una posicion y hace cumplir la propiedad de heap hasta la raíz
-//upheap asume que hacia arriba hay un heap
-func (ccp *colaConPrioridad[T]) upheap(pos int) {
-	posPadre:=(pos-1)/2
-
-	if pos==0{
-		return
+/* ******* FUNCIONES AUXILIARES ********** */
+func (ccp *colaConPrioridad[T]) verificarValidezDeOperacion() {
+	if ccp.EstaVacia() {
+		panic(_MENSAJE_PANIC_COLA_VACIA)
 	}
-	
-	if ccp.cmp(ccp.datos[pos],ccp.datos[posPadre]) > 0 {
-		ccp.datos[pos],ccp.datos[posPadre]=ccp.datos[posPadre],ccp.datos[pos]
-	}
-
-	ccp.upheap(posPadre)
 }
 
-//downheap recibe una posicion y hace cumplir la propiedad hacia abajo
-//downheap asume que hacia arriba hay un heap
-func (ccp *colaConPrioridad[T]) downheap(pos int){
-	posHijoIzq:=2*pos+1
-	posHijoDer:=2*pos+2
-	if posHijoDer > ccp.cantidad && posHijoIzq > ccp.cantidad {
-		return
-	}
-		//se fija si el padre es intercambiable por el hijo derecho o el izquierdo. si no es, no hace nada,
-		if ccp.cmp(ccp.datos[posHijoDer],ccp.datos[posHijoIzq]) >= 0 && ccp.cmp(ccp.datos[pos],ccp.datos[posHijoDer]) < 0 {
-			ccp.datos[pos],ccp.datos[posHijoDer]=ccp.datos[posHijoDer],ccp.datos[pos]
-		} else if ccp.cmp(ccp.datos[posHijoDer],ccp.datos[posHijoIzq]) < 0 && ccp.cmp(ccp.datos[pos],ccp.datos[posHijoIzq]) < 0{
-			ccp.datos[pos],ccp.datos[posHijoIzq]=ccp.datos[posHijoIzq],ccp.datos[pos]
-		}
-
-	ccp.downheap(posHijoDer)
-	ccp.downheap(posHijoIzq)
-}
-
-//redimensionar recibe la nueva capacidad que se le quiere asignar al arreglo de datos del heap,
-//y realiza la resimension del mismo
+// redimensionar recibe la nueva capacidad que se le quiere asignar al arreglo de datos del heap,
+// y realiza la resimension del mismo
 func (ccp *colaConPrioridad[T]) redimensionar(capacidad int) {
 	datosNuevo := make([]T, capacidad)
 	copy(datosNuevo, ccp.datos)
 	ccp.datos = datosNuevo
 }
 
-/******MUY AUXILIAR***/
-
-// mostrar imprime el arreglo datos (solo para probar, despues la sacamos)
-func (ccp *colaConPrioridad[T]) mostrar() {
-	for _, val:=range(ccp.datos){
-		fmt.Printf("%v", val)
+// heapify recibe un puntero a un arreglo y una función de comparación y organiza el arreglo para que cumpla con las propiedades del heap
+func heapify[T any](arreglo *[]T, funcion_cmp func(T, T) int) {
+	for i := cap(*arreglo) - 1; i >= 0; i-- {
+		downheap(i, arreglo, funcion_cmp, len(*arreglo))
 	}
-	fmt.Printf(" \n")
+}
+
+// upheap recibe una posicion y hace cumplir la propiedad de heap hasta la raíz.
+// upheap asume que hacia arriba hay un heap
+func (ccp *colaConPrioridad[T]) upheap(pos int) {
+	if pos == 0 {
+		return
+	}
+	posPadre := hallarPosicionPadre(pos)
+	if ccp.cmp(ccp.datos[pos], ccp.datos[posPadre]) > 0 {
+		swap(&(ccp.datos), pos, posPadre)
+	}
+	ccp.upheap(posPadre)
+}
+
+// downheap recibe una posición pos, un puntero a un arreglo arr, una función de comparación cmp y la cantidad de elementos del arreglo cantidad y le realiza downheap en esa posición
+func downheap[T any](pos int, arr *[]T, cmp func(T, T) int, cantidad int) {
+	posHijoIzq := hallarPosicionHijoIzquierdo(pos)
+	posHijoDer := hallarPosicionHijoDerecho(pos)
+	if posHijoDer >= cantidad && posHijoIzq >= cantidad {
+		return
+	}
+	//si solo tiene un hijo, ese hijo es el izquierdo
+	if (posHijoDer >= cantidad || cmp((*arr)[posHijoDer], (*arr)[posHijoIzq]) < 0) && cmp((*arr)[pos], (*arr)[posHijoIzq]) < 0 {
+		swap(arr, pos, posHijoIzq)
+		downheap(posHijoIzq, arr, cmp, cantidad)
+	} else if posHijoDer < cantidad && cmp((*arr)[posHijoDer], (*arr)[posHijoIzq]) >= 0 && cmp((*arr)[pos], (*arr)[posHijoDer]) < 0 {
+		swap(arr, pos, posHijoDer)
+		downheap(posHijoDer, arr, cmp, cantidad)
+	}
+}
+
+func swap[T any](arr *[]T, pos1 int, pos2 int) {
+	(*arr)[pos1], (*arr)[pos2] = (*arr)[pos2], (*arr)[pos1]
+
+}
+
+func hallarPosicionHijoIzquierdo(pos int) int {
+	return 2*pos + 1
+}
+
+func hallarPosicionHijoDerecho(pos int) int {
+	return 2*pos + 2
+}
+
+func hallarPosicionPadre(pos int) int {
+	return (pos - 1) / 2
 }
