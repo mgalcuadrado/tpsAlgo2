@@ -26,6 +26,16 @@ func comparacion(v1 int, v2 int) int {
 	}
 }
 
+func comparacionArreglos(v1 []int, v2 []int) int {
+	if v1[0] > v2[0] {
+		return 1
+	} else if v1[0] < v2[0] {
+		return -1
+	} else {
+		return 0
+	}
+}
+
 func TestColaPrioridadVacia(t *testing.T) {
 	t.Log("Comprueba que la cola de prioridad vacia no tiene datos")
 	cp := TDAColaPrioridad.CrearHeap[int](comparacion)
@@ -56,6 +66,24 @@ func TestColaPrioridadPocosElementos(t *testing.T) {
 	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.Desencolar() }, "Desencolar una cola vacia debe generar un panic")
 }
 
+func TestColaPrioridadArregloDeArregloDeEnteros(t *testing.T) {
+	t.Log("Comprueba que pocos elementos se encolen correctamente en la cola de prioridad")
+	cp := TDAColaPrioridad.CrearHeap[[]int](comparacionArreglos)
+	arreglo1 := []int{1, 2, 3, 4}
+	arreglo2 := []int{2, 5, 7, 6}
+	arreglo3 := []int{43, 25, 5, 3}
+	cp.Encolar(arreglo1)
+	cp.Encolar(arreglo2)
+	cp.Encolar(arreglo3)
+	require.EqualValues(t, 3, cp.Cantidad(), "La cola debe tener 9 elementos ingresados")
+	require.EqualValues(t, arreglo3[0], (cp.VerMax())[0], "El máximo debe ser el elemento mayor ingresado (9)")
+	require.EqualValues(t, arreglo3[0], (cp.Desencolar())[0], "Desencolando ciclicamente y descendentemente, desencolar devuelve al desencolado")
+	require.EqualValues(t, arreglo2[0], (cp.Desencolar())[0], "Desencolando ciclicamente y descendentemente, desencolar devuelve al desencolado")
+	require.EqualValues(t, arreglo1[0], (cp.Desencolar())[0], "Desencolando ciclicamente y descendentemente, desencolar devuelve al desencolado")
+	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.VerMax() }, "Ver el máximo de una cola vacía debe generar un panic")
+	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.Desencolar() }, "Desencolar una cola vacia debe generar un panic")
+}
+
 func TestColaPrioridadAlternarEncolarDesencolar(t *testing.T) {
 	cp := TDAColaPrioridad.CrearHeap[int](comparacion)
 	cp.Encolar(5)
@@ -71,7 +99,6 @@ func TestColaPrioridadAlternarEncolarDesencolar(t *testing.T) {
 	require.True(t, cp.EstaVacia(), "La cola debe estar vacía después de alternar operaciones de encolar y desencolar")
 	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.VerMax() }, "Ver el máximo de una cola vacía debe generar un panic")
 	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.Desencolar() }, "Desencolar una cola vacia debe generar un panic")
-
 }
 
 func TestColaPrioridadIniciandoConArregloDeEnteros(t *testing.T) {
