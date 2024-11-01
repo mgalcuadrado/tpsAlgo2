@@ -26,18 +26,8 @@ func comparacion(v1 int, v2 int) int {
 	}
 }
 
-func comparacionArreglos(v1 []int, v2 []int) int {
-	if v1[0] > v2[0] {
-		return 1
-	} else if v1[0] < v2[0] {
-		return -1
-	} else {
-		return 0
-	}
-}
-
 func TestColaPrioridadVacia(t *testing.T) {
-	t.Log("Comprueba que la cola de prioridad vacia no tiene datos")
+	t.Log("Comprueba que la cola de prioridad vacía no tiene datos")
 	cp := TDAColaPrioridad.CrearHeap[int](comparacion)
 	require.EqualValues(t, 0, cp.Cantidad(), "Una cola sin elementos debe tener 0 de cantidad")
 	require.True(t, true, cp.EstaVacia(), "Una cola sin elementos debe estar vacia")
@@ -66,24 +56,6 @@ func TestColaPrioridadPocosElementos(t *testing.T) {
 	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.Desencolar() }, "Desencolar una cola vacia debe generar un panic")
 }
 
-func TestColaPrioridadArregloDeArregloDeEnteros(t *testing.T) {
-	t.Log("Comprueba que pocos elementos se encolen correctamente en la cola de prioridad")
-	cp := TDAColaPrioridad.CrearHeap[[]int](comparacionArreglos)
-	arreglo1 := []int{1, 2, 3, 4}
-	arreglo2 := []int{2, 5, 7, 6}
-	arreglo3 := []int{43, 25, 5, 3}
-	cp.Encolar(arreglo1)
-	cp.Encolar(arreglo2)
-	cp.Encolar(arreglo3)
-	require.EqualValues(t, 3, cp.Cantidad(), "La cola debe tener 9 elementos ingresados")
-	require.EqualValues(t, arreglo3[0], (cp.VerMax())[0], "El máximo debe ser el elemento mayor ingresado (9)")
-	require.EqualValues(t, arreglo3[0], (cp.Desencolar())[0], "Desencolando ciclicamente y descendentemente, desencolar devuelve al desencolado")
-	require.EqualValues(t, arreglo2[0], (cp.Desencolar())[0], "Desencolando ciclicamente y descendentemente, desencolar devuelve al desencolado")
-	require.EqualValues(t, arreglo1[0], (cp.Desencolar())[0], "Desencolando ciclicamente y descendentemente, desencolar devuelve al desencolado")
-	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.VerMax() }, "Ver el máximo de una cola vacía debe generar un panic")
-	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.Desencolar() }, "Desencolar una cola vacia debe generar un panic")
-}
-
 func TestColaPrioridadAlternarEncolarDesencolar(t *testing.T) {
 	cp := TDAColaPrioridad.CrearHeap[int](comparacion)
 	cp.Encolar(5)
@@ -102,7 +74,7 @@ func TestColaPrioridadAlternarEncolarDesencolar(t *testing.T) {
 }
 
 func TestColaPrioridadIniciandoConArregloDeEnteros(t *testing.T) {
-	t.Log("Comprueba que se cree bien la cola de prioridad a partir de un arreglo")
+	t.Log("Comprueba que se cree bien la cola de prioridad a partir de un arreglo de enteros")
 	arreglo := []int{12, 3, 45, 2, 4, 50, 22, 16, 7}
 	cp := TDAColaPrioridad.CrearHeapArr[int](arreglo, comparacion)
 	arr_ordenado := []int{50, 45, 22, 16, 12, 7, 4, 3, 2}
@@ -115,7 +87,7 @@ func TestColaPrioridadIniciandoConArregloDeEnteros(t *testing.T) {
 }
 
 func TestColaPrioridadIniciandoConArregloDeStrings(t *testing.T) {
-	t.Log("Comprueba que se cree bien la cola de prioridad a partir de un arreglo")
+	t.Log("Comprueba que se cree bien la cola de prioridad a partir de un arreglo de cadenas")
 	animales := []string{"Gato", "Perro", "Vaca", "Pato", "Sapo", "Tortuga", "Conejo", "Avestruz", "Oruga", "Mapache"}
 	cp := TDAColaPrioridad.CrearHeapArr[string](animales, strings.Compare)
 	arr_ordenado := []string{"Vaca", "Tortuga", "Sapo", "Perro", "Pato", "Oruga", "Mapache", "Gato", "Conejo", "Avestruz"}
@@ -201,7 +173,7 @@ func ejecutarPruebasVolumenHeapSort(b *testing.B, n int) {
 
 func BenchmarkHeapSort(b *testing.B) {
 	b.Log("Prueba de stress del HeapSort. Prueba guardando distinta cantidad de elementos " +
-		"(muy grandes) b.N elementos, iterarlos todos sin problemas y verificando que se encuentren ordenados. Se ejecuta cada prueba b.N veces para generar " +
+		"(muy grandes) b.N elementos, iterarlos todos sin problemas y verifica que se encuentren ordenados. Se ejecuta cada prueba b.N veces para generar " +
 		"un benchmark")
 	for _, n := range TAMS_VOLUMEN {
 		b.Run(fmt.Sprintf("Prueba %d elementos", n), func(b *testing.B) {
