@@ -22,12 +22,10 @@ type abb[K comparable, V any] struct {
 }
 
 type iteradorExternoRango[K comparable, V any] struct {
-	desde             *K
-	hasta             *K
-	cmp               func(K, K) int
-	actual            *nodoABB[K, V]
-	pila              TDAPila.Pila[*nodoABB[K, V]]
-	verificador_rango func(K) int
+	desde *K
+	hasta *K
+	cmp   func(K, K) int
+	pila  TDAPila.Pila[*nodoABB[K, V]]
 }
 
 type nodoABB[K comparable, V any] struct {
@@ -53,14 +51,12 @@ func crearNodoABB[K comparable, V any](clave K, dato V, izq *nodoABB[K, V], der 
 	return nodo
 }
 
-func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func(K, K) int, raiz *nodoABB[K, V], verificador_rango func(K) int) *iteradorExternoRango[K, V] {
+func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func(K, K) int, raiz *nodoABB[K, V]) *iteradorExternoRango[K, V] {
 	iter := &iteradorExternoRango[K, V]{
-		desde:             desde,
-		hasta:             hasta,
-		cmp:               cmp,
-		actual:            nil,
-		pila:              TDAPila.CrearPilaDinamica[*nodoABB[K, V]](),
-		verificador_rango: verificador_rango,
+		desde: desde,
+		hasta: hasta,
+		cmp:   cmp,
+		pila:  TDAPila.CrearPilaDinamica[*nodoABB[K, V]](),
 	}
 	if raiz == nil {
 		return iter
@@ -184,9 +180,7 @@ func (abb *abb[K, V]) Iterar(visitar func(clave K, dato V) bool) {
 		return
 	}
 
-	iterador_interno(abb.raiz, nil, nil, abb.cmp, func(clave K, desde *K, hasta *K, cmp func(K, K) int) int {
-		return 0
-	}, visitar)
+	iterador_interno(abb.raiz, nil, nil, abb.cmp, visitar)
 }
 
 // Iterar recibe una función visitar y visita in-order todos los nodos del árbol cuyas clavesse encuentren entre lo referenciado por desde y hasta mientras que visitar dé true
@@ -195,67 +189,50 @@ func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato
 		return
 	}
 
-	iterador_interno(abb.raiz, desde, hasta, abb.cmp, en_rango, visitar)
+	iteradorInterno(abb.raiz, desde, hasta, abb.cmp, visitar)
 }
 
 // iterador_interno recibe un nodo y una función de verificación para saber si la clave analizada se encuentra o no en el rango
 // no se incluye en la estructura para evitar una dependencia circular, pues puede depender de los límites del rango guardados en el iterador (desde y hasta)
-func iterador_interno[K comparable, V any](nodo *nodoABB[K, V], desde *K, hasta *K, cmp func(K, K) int, verificador_rango func(clave K, desde *K, hasta *K, cmp func(K, K) int) int, visitar func(clave K, dato V) bool) bool {
+func iterador_interno[K comparable, V any](nodo *nodoABB[K, V], desde *K, hasta *K, cmp func(K, K) int, visitar func(clave K, dato V) bool) bool {
 	if nodo == nil {
 		return true
 	}
-	verificador := verificador_rango(nodo.clave, desde, hasta, cmp)
-	if verificador < 0 {
-		if !iterador_interno(nodo.derecha, desde, hasta, cmp, verificador_rango, visitar) {
-			return false
-		}
-	} else if verificador > 0 {
-		if !iterador_interno(nodo.izquierda, desde, hasta, cmp, verificador_rango, visitar) {
-			return false
-		}
-	} else {
-		if !iterador_interno(nodo.izquierda, desde, hasta, cmp, verificador_rango, visitar) || !visitar(nodo.clave, nodo.valor) || !iterador_interno(nodo.derecha, desde, hasta, cmp, verificador_rango, visitar) {
-			return false
-		}
+	if desde != nil && cmp(nodo.clave, *desde) < 0 && !iterador_interno(nodo.derecha, desde, hasta, cmp, visitar) {
+		return false
+	}
+	if hasta != nil && cmp(nodo.clave, *hasta) > 0 && !iterador_interno(nodo.izquierda, desde, hasta, cmp, visitar) {
+		return false
+	}
+	if (nodo.izquierda != nil && !iterador_interno(nodo.izquierda, desde, hasta, cmp, visitar)) || !visitar(nodo.clave, nodo.valor) || (nodo.derecha != nil && !iterador_interno(nodo.derecha, desde, hasta, cmp, visitar)) {
+		return false
 	}
 	return true
 }
 
-// en_rango recibe una clave, un inicio y fin, y una función de comparación, y determina si la clave pertence al rango indicado-
-// Si la clave es menor al inicio del intervalo, devuelve -1
-// Si la clave es mayor al fin del intervalo, devuelve 1
-// Si la clave esta dentro del rango, devuelve 0
-func en_rango[K comparable](clave K, desde *K, hasta *K, cmp func(K, K) int) int {
-
-	if desde != nil && cmp(clave, *desde) < 0 {
-		return -1
+func iteradorInterno[K comparable, V any](nodo *nodoABB[K, V], desde *K, hasta *K, cmp func(K, K) int, visitar func(clave K, dato V) bool) bool {
+	if nodo == nil {
+		return true
 	}
-	if hasta != nil && cmp(clave, *hasta) > 0 {
-		return 1
+	if desde != nil && cmp(nodo.clave, *desde) < 0 { //todo lo que esté a izquierda de un valor menor a desde será menor a desde
+		return iteradorInterno(nodo.derecha, desde, hasta, cmp, visitar) //si se llega a este punto iteradorInterno(nodo.derecha, ...) devolvió false
+	} else if hasta != nil && cmp(nodo.clave, *hasta) > 0 { //todo lo que esté a derecha de un valor mayor a hasta será mayor a hasta
+		return iteradorInterno(nodo.izquierda, desde, hasta, cmp, visitar)
+	} else { //si se llega a este punto entonces nodo.clave está en el rango
+		return iteradorInterno(nodo.izquierda, desde, hasta, cmp, visitar) && visitar(nodo.clave, nodo.valor) && iteradorInterno(nodo.derecha, desde, hasta, cmp, visitar)
 	}
-	return 0
 }
 
 /* ************ FUNCIONES DE ITERADORES EXTERNOS ************ */
 
 // Iterador devuelve un IterDiccionario para este Diccionario
 func (abb *abb[K, V]) Iterador() IterDiccionario[K, V] { //comento esto para poder correr las pruebas
-	return crearIteradorExternoRango[K, V](nil, nil, abb.cmp, abb.raiz, func(K) int {
-		return 0
-	})
+	return crearIteradorExternoRango[K, V](nil, nil, abb.cmp, abb.raiz)
 }
 
 // IteradorRango crea un IterDiccionario que sólo itera por las claves que se encuentren en el rango entre desde y hasta (inclusive)
 func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
-	return crearIteradorExternoRango[K, V](desde, hasta, abb.cmp, abb.raiz, func(clave K) int {
-		if desde != nil && abb.cmp(clave, *desde) < 0 {
-			return -1
-		} else if hasta != nil && abb.cmp(clave, *hasta) > 0 {
-			return 1
-		} else {
-			return 0
-		}
-	})
+	return crearIteradorExternoRango[K, V](desde, hasta, abb.cmp, abb.raiz)
 }
 
 // HaySiguiente devuelve si hay más datos para ver. Esto es, si en el lugar donde se encuentra parado
@@ -267,17 +244,18 @@ func (iter *iteradorExternoRango[K, V]) HaySiguiente() bool {
 // VerActual devuelve la clave y el dato del elemento actual en el que se encuentra posicionado el iterador.
 // Si no HaySiguiente, debe entrar en pánico con el mensaje 'El iterador termino de iterar'
 func (iter *iteradorExternoRango[K, V]) VerActual() (K, V) {
-	iter.verificarSiHaySiguiente()
-	actual := iter.actual
+	if !iter.HaySiguiente() {
+		panic(_MENSAJE_PANIC_FIN_DE_ITERACION_ABB)
+	}
+	actual := iter.pila.VerTope()
 	return actual.clave, actual.valor
 }
 
 // Siguiente si HaySiguiente avanza al siguiente elemento en el diccionario. Si no HaySiguiente, entonces debe
 // entrar en pánico con mensaje 'El iterador termino de iterar'
 func (iter *iteradorExternoRango[K, V]) Siguiente() {
-	iter.verificarSiHaySiguiente()
+	iter.VerActual()
 	nodo := iter.pila.Desapilar()
-	iter.actualizarActual()
 	if nodo.derecha == nil {
 		return
 	}
@@ -286,31 +264,15 @@ func (iter *iteradorExternoRango[K, V]) Siguiente() {
 
 /***************Funciones auxiliares iterador externo *************/
 
-// verificarSiHaySiguiente() recibe un iterador externo por rangos y, si no hay siguiente, genera un panic con el mensaje "El iterador termino de iterar"
-func (iter *iteradorExternoRango[K, V]) verificarSiHaySiguiente() {
-	if !iter.HaySiguiente() {
-		panic(_MENSAJE_PANIC_FIN_DE_ITERACION_ABB)
-	}
-}
-
-// actualizarActual recibe un iterador externo por rangos y ctualiza el valor actual del mismo
-func (iter *iteradorExternoRango[K, V]) actualizarActual() {
-	if !iter.pila.EstaVacia() {
-		iter.actual = iter.pila.VerTope()
-	}
-}
-
 func (iter *iteradorExternoRango[K, V]) apilarNodosDesdeDerecha(nodo *nodoABB[K, V]) {
 	nodoActual := nodo
 	for nodoActual != nil {
-		verificador := iter.verificador_rango(nodoActual.clave)
-		if verificador < 0 && nodoActual.derecha != nil {
+		if iter.desde != nil && iter.cmp(nodoActual.clave, *(iter.desde)) < 0 && nodoActual.derecha != nil {
 			iter.apilarNodosDesdeDerecha(nodoActual.derecha)
 			break
-		} else if iter.verificador_rango(nodoActual.clave) == 0 {
+		} else if iter.hasta == nil || (iter.hasta != nil && iter.cmp(nodoActual.clave, *(iter.hasta)) <= 0) {
 			iter.pila.Apilar(nodoActual)
 		}
 		nodoActual = nodoActual.izquierda
 	}
-	iter.actualizarActual() //se actualiza el actual
 }

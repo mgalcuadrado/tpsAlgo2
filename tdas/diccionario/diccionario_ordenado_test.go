@@ -79,27 +79,23 @@ func TestIteradorInternoRangoClavesYValores(t *testing.T) {
 	clave2 := "Perro"
 	clave3 := "Vaca"
 	clave4 := "Sapo"
-
 	claves := []string{clave1, clave2, clave3, clave4}
 	dic := TDADiccionario.CrearABB[string, int](strings.Compare)
 	dic.Guardar(claves[0], 3)
 	dic.Guardar(claves[1], 4)
 	dic.Guardar(claves[2], 9)
 	dic.Guardar(claves[3], 8)
-
 	cs := []string{"", "", "", ""}
 	cantidad := 0
 	cantPtr := &cantidad
 	factorial := 1
 	factorialPtr := &factorial
-
 	dic.IterarRango(&clave1, &clave4, func(clave string, dato int) bool {
 		cs[cantidad] = clave
-		*cantPtr = *cantPtr + 1
-		*factorialPtr = (*factorialPtr) * dato
+		*cantPtr += 1
+		*factorialPtr *= dato
 		return true
 	})
-
 	require.EqualValues(t, 3, cantidad)
 	require.NotEqualValues(t, -1, buscar2(cs[1], claves))
 	require.NotEqualValues(t, -1, buscar2(cs[2], claves))
@@ -108,6 +104,23 @@ func TestIteradorInternoRangoClavesYValores(t *testing.T) {
 	require.NotEqualValues(t, cs[3], cs[2])
 	require.NotEqualValues(t, cs[1], cs[3])
 	require.EqualValues(t, 96, *factorialPtr)
+}
+
+func TestIterarRangoVariantesDe7(t *testing.T) {
+	t.Log("Crea un iterador y no lo avanza. Luego crea otro iterador y lo avanza.")
+	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	arr := []int{3, 1, 2, 4, 5, 6, 7}
+	for i, _ := range arr {
+		dic.Guardar(arr[i], arr[i])
+	}
+	inicio, fin := 2, 5
+	contador := 0
+	dic.IterarRango(&inicio, &fin, func(clave int, dato int) bool {
+		require.Equal(t, contador+2, clave)
+		contador++
+		return true
+	})
+	require.Equal(t, 4, contador)
 }
 
 func TestVolumenIteradorRangoCorte(t *testing.T) {
@@ -196,21 +209,24 @@ func TestIteradorRangoDiccionarioVacio(t *testing.T) {
 }
 
 func TestIteradorRangoDiccionarioClavesYValores(t *testing.T) {
+	t.Log("Se guardan claves de tipo int y valores de tipo string y se itera con el iterador externo en un rango de valores. El test verifica que se itere in order")
 	dic := TDADiccionario.CrearABB[int, string](comparacion2)
 	arr := []int{3, 15, 2, 12, 54, 20, 37, 33, 16, 7}
 	arr_ordenado := []int{2, 3, 7, 12, 15, 16, 20, 33, 37, 54}
 	str := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
 	str_ordenado := []string{"C", "A", "J", "D", "B", "I", "F", "H", "G", "E"}
-	for indice, _ := range arr {
-		dic.Guardar(arr[indice], str[indice])
+	for indice, valor := range arr {
+		dic.Guardar(valor, str[indice])
 	}
 	iter := dic.IteradorRango(&arr[3], &arr[5])
-	for contador := 0; iter.HaySiguiente(); contador++ {
+	contador := 0
+	for ; iter.HaySiguiente(); contador++ {
 		clave, valor := iter.VerActual()
-		require.Equal(t, clave, arr_ordenado[3+contador])
-		require.Equal(t, valor, str_ordenado[3+contador])
+		require.Equal(t, arr_ordenado[3+contador], clave)
+		require.Equal(t, str_ordenado[3+contador], valor)
 		iter.Siguiente()
 	}
+	require.Equal(t, 4, contador)
 	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.VerActual() })
 	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Siguiente() })
 }
@@ -239,7 +255,7 @@ func TestIteradorRangoNoLlegaAlFinal(t *testing.T) {
 	require.NotEqualValues(t, -1, buscar2(cero, claves))
 }
 
-func TestPruebaIterarRangoTrasBorrados(t *testing.T) {
+func TestPruebaIteradorRangoTrasBorrados(t *testing.T) {
 	t.Log("Esta prueba intenta verificar el comportamiento del ABB cuando " +
 		"queda con listas vacías en su tabla. El iterador debería ignorar las listas vacías, avanzando hasta " +
 		"encontrar un elemento real.")
@@ -335,23 +351,6 @@ func BenchmarkIteradorRango(b *testing.B) {
 			}
 		})
 	}
-}
-
-func TestIterarRangoVariantesDe7(t *testing.T) {
-	t.Log("Crea un iterador y no lo avanza. Luego crea otro iterador y lo avanza.")
-	dic := TDADiccionario.CrearABB[int, int](comparacion2)
-	arr := []int{3, 1, 2, 4, 5, 6, 7}
-	for i, _ := range arr {
-		dic.Guardar(arr[i], arr[i])
-	}
-	inicio, fin := 2, 5
-	contador := 0
-	dic.IterarRango(&inicio, &fin, func(clave int, dato int) bool {
-		require.Equal(t, contador+2, clave)
-		contador++
-		return true
-	})
-	require.Equal(t, 4, contador)
 }
 
 func TestIteradorRangoVariantesDe7(t *testing.T) {
