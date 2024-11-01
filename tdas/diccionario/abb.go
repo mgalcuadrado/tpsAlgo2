@@ -267,7 +267,7 @@ func (iter *iteradorExternoRango[K, V]) Siguiente() {
 func (iter *iteradorExternoRango[K, V]) apilarNodosDesdeDerecha(nodo *nodoABB[K, V]) {
 	nodoActual := nodo
 	for nodoActual != nil {
-		if iter.desde != nil && iter.cmp(nodoActual.clave, *(iter.desde)) < 0 && nodoActual.derecha != nil {
+		if iter.desde != nil && iter.cmp(nodoActual.clave, *(iter.desde)) < 0 {
 			iter.apilarNodosDesdeDerecha(nodoActual.derecha)
 			break
 		} else if iter.hasta == nil || (iter.hasta != nil && iter.cmp(nodoActual.clave, *(iter.hasta)) <= 0) {
