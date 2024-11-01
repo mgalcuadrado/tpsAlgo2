@@ -165,7 +165,7 @@ func BenchmarkColaPrioridad(b *testing.B) {
 func TestHeapSortUnElemento(t *testing.T) {
 	t.Log("Comprueba que el heap sort funcione correctamente para un solo elemento")
 	arr := []string{"Hola"}
-	TDAColaPrioridad.HeapSort(&arr, strings.Compare)
+	TDAColaPrioridad.HeapSort(arr, strings.Compare)
 	for _, valor := range arr {
 		require.Equal(t, "Hola", valor)
 	}
@@ -176,7 +176,7 @@ func TestHeapSortPocosElementos(t *testing.T) {
 	t.Log("Comprueba que el heap sort ordene correctamente pocos elementos")
 	arr := []int{6, 1, 5, 4, 10, 2}
 	arr_ordenado := []int{1, 2, 4, 5, 6, 10}
-	TDAColaPrioridad.HeapSort(&arr, comparacion)
+	TDAColaPrioridad.HeapSort(arr, comparacion)
 	for indice, valor := range arr {
 		require.Equal(t, arr_ordenado[indice], valor)
 	}
@@ -189,7 +189,7 @@ func ejecutarPruebasVolumenHeapSort(b *testing.B, n int) {
 		arr[i] = n - 1 - i
 	}
 	require.Equal(b, n, len(arr))
-	TDAColaPrioridad.HeapSort(&arr, comparacion)
+	TDAColaPrioridad.HeapSort(arr, comparacion)
 	require.Equal(b, n, len(arr))
 	anterior := arr[0]
 	for i := 0; i < n; i++ {
