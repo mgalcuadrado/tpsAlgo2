@@ -78,11 +78,11 @@ func (ccp *colaConPrioridad[T]) Cantidad() int {
 }
 
 // HeapSort recibe un puntero a un arreglo y una funcion de comparacion y ordena el arreglo de menor a mayor (in-place)
-func HeapSort[T any](elementos *[]T, funcion_cmp func(T, T) int) {
-	heapify[T](elementos, funcion_cmp)
-	for cantidad := len(*elementos) - 1; cantidad > 0; cantidad-- { //arranco en len - 1 porque trabajo con posiciones hasta -1
-		swap(elementos, 0, cantidad)
-		downheap(0, elementos, funcion_cmp, cantidad)
+func HeapSort[T any](elementos []T, funcion_cmp func(T, T) int) {
+	heapify[T](&elementos, funcion_cmp)
+	for cantidad := len(elementos) - 1; cantidad > 0; cantidad-- { //arranco en len - 1 porque trabajo con posiciones hasta -1
+		swap(&elementos, 0, cantidad)
+		downheap(0, &elementos, funcion_cmp, cantidad)
 	}
 }
 
