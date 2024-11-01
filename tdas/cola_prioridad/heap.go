@@ -27,6 +27,9 @@ func CrearHeap[T any](funcion_cmp func(T, T) int) ColaPrioridad[T] {
 
 // CrearHeapArr recibe un arreglo y una función de comparación y crea una cola de prioridad con los datos de ese arreglo
 func CrearHeapArr[T any](arreglo []T, funcion_cmp func(T, T) int) ColaPrioridad[T] {
+	if len(arreglo) == 0 {
+		return CrearHeap[T](funcion_cmp)
+	}
 	arr := make([]T, cap(arreglo))
 	copy(arr, arreglo) //copio el arreglo en memoria nueva para no modificarle el arreglo original a Bárbara!
 	heapify[T](&arr, funcion_cmp)

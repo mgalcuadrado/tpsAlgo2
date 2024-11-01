@@ -73,6 +73,26 @@ func TestColaPrioridadAlternarEncolarDesencolar(t *testing.T) {
 	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.Desencolar() }, "Desencolar una cola vacia debe generar un panic")
 }
 
+func TestColaPrioridadIniciandoConArregloVacio(t *testing.T) {
+	t.Log("Comprueba que se cree bien la cola de prioridad a partir de un arreglo de enteros")
+	arreglo := []int{}
+	cp := TDAColaPrioridad.CrearHeapArr[int](arreglo, comparacion)
+	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.VerMax() }, "Ver el máximo de una cola vacía debe generar un panic")
+	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.Desencolar() }, "Desencolar una cola vacia debe generar un panic")
+	require.True(t, cp.EstaVacia())
+	for i := 0; i < 3; i++ {
+		require.True(t, cp.EstaVacia())
+		require.EqualValues(t, 0, cp.Cantidad())
+		cp.Encolar(i)
+		require.EqualValues(t, i, cp.VerMax(), "Se desencola del máximo al mínimo en una cola de prioridad de máximos")
+		require.EqualValues(t, 1, cp.Cantidad())
+		require.EqualValues(t, i, cp.Desencolar(), "Se desencola del máximo al mínimo en una cola de prioridad de máximos")
+	}
+	require.True(t, cp.EstaVacia())
+	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.VerMax() }, "Ver el máximo de una cola vacía debe generar un panic")
+	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.Desencolar() }, "Desencolar una cola vacia debe generar un panic")
+}
+
 func TestColaPrioridadIniciandoConArregloDeEnteros(t *testing.T) {
 	t.Log("Comprueba que se cree bien la cola de prioridad a partir de un arreglo de enteros")
 	arreglo := []int{12, 3, 45, 2, 4, 50, 22, 16, 7}
