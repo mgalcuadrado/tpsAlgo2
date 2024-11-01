@@ -80,8 +80,8 @@ func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func
 /* ************ FUNCIONES DEL ABB ************ */
 // Guardar guarda el par clave-dato en el Diccionario. Si la clave ya se encontraba, se actualiza el dato asociado
 func (abb *abb[K, V]) Guardar(clave K, dato V) {
-	ref, pertenece := abb.buscar(clave, &abb.raiz)
-	if pertenece {
+	ref := abb.buscar(clave, &abb.raiz)
+	if *ref != nil {
 		(*ref).valor = dato
 	} else {
 		nodo := crearNodoABB(clave, dato, nil, nil)
@@ -92,8 +92,8 @@ func (abb *abb[K, V]) Guardar(clave K, dato V) {
 
 // Pertenece determina si una clave ya se encuentra en el diccionario, o no
 func (abb *abb[K, V]) Pertenece(clave K) bool {
-	_, pertenece := abb.buscar(clave, &abb.raiz)
-	return pertenece
+	ref := abb.buscar(clave, &abb.raiz)
+	return *ref != nil
 }
 
 // Cantidad devuelve la cantidad de elementos dentro del diccionario
@@ -144,13 +144,13 @@ func (abb *abb[K, V]) Borrar(clave K) V {
 
 /* ************ Funciones auxiliares  del abb ************ */
 
-// buscar recibe la clave a buscar y un puntero doble al nodo en el que se está buscando. Devuelve un puntero al nodo buscado y un bool indicando si se hallaba o no el elemento. Recursivamente se llama a sí misma descartando sectores del árbol usando la función de comparación abb.cmp
-func (abb *abb[K, V]) buscar(clave K, raiz **nodoABB[K, V]) (**nodoABB[K, V], bool) {
+// buscar recibe la clave a buscar y un puntero doble al nodo en el que se está buscando. Devuelve un puntero al nodo buscado (si la clave no pertenece al diccionario, será un puntero a nil). Recursivamente se llama a sí misma descartando sectores del árbol usando la función de comparación abb.cmp
+func (abb *abb[K, V]) buscar(clave K, raiz **nodoABB[K, V]) **nodoABB[K, V] {
 	if *raiz == nil {
-		return raiz, false
+		return raiz
 	}
 	if abb.cmp((*raiz).clave, clave) == 0 {
-		return raiz, true
+		return raiz
 	}
 	if abb.cmp((*raiz).clave, clave) > 0 {
 		return abb.buscar(clave, &((*raiz).izquierda))
@@ -169,11 +169,8 @@ func (abb *abb[K, V]) obtenerReemplazante(referencia **nodoABB[K, V]) **nodoABB[
 
 // obtenerReferenciaValida recibe una clave, la busca en el árbol y obtiene una referencia a la misma, verificando si se encontraba en el diccionario. De no encontrarse devuelve un panic
 func (abb *abb[K, V]) obtenerReferenciaValida(clave K) **nodoABB[K, V] {
-	if abb.Cantidad() == 0 {
-		panic(_MENSAJE_PANIC_CLAVE_NO_PERTENECE_A_DICCIONARIO_ABB)
-	}
-	ref, pertenece := abb.buscar(clave, &abb.raiz)
-	if !pertenece {
+	ref := abb.buscar(clave, &abb.raiz)
+	if *ref == nil {
 		panic(_MENSAJE_PANIC_CLAVE_NO_PERTENECE_A_DICCIONARIO_ABB)
 	}
 	return ref
@@ -270,7 +267,7 @@ func (iter *iteradorExternoRango[K, V]) HaySiguiente() bool {
 // VerActual devuelve la clave y el dato del elemento actual en el que se encuentra posicionado el iterador.
 // Si no HaySiguiente, debe entrar en pánico con el mensaje 'El iterador termino de iterar'
 func (iter *iteradorExternoRango[K, V]) VerActual() (K, V) {
-	iter.verificar_si_HaySiguiente()
+	iter.verificarSiHaySiguiente()
 	actual := iter.actual
 	return actual.clave, actual.valor
 }
@@ -278,7 +275,7 @@ func (iter *iteradorExternoRango[K, V]) VerActual() (K, V) {
 // Siguiente si HaySiguiente avanza al siguiente elemento en el diccionario. Si no HaySiguiente, entonces debe
 // entrar en pánico con mensaje 'El iterador termino de iterar'
 func (iter *iteradorExternoRango[K, V]) Siguiente() {
-	iter.verificar_si_HaySiguiente()
+	iter.verificarSiHaySiguiente()
 	nodo := iter.pila.Desapilar()
 	iter.actualizarActual()
 	if nodo.derecha == nil {
@@ -289,8 +286,8 @@ func (iter *iteradorExternoRango[K, V]) Siguiente() {
 
 /***************Funciones auxiliares iterador externo *************/
 
-// verificar_si_HaySiguiente recibe un iterador externo por rangos y, si no hay siguiente, genera un panic con el mensaje "El iterador termino de iterar"
-func (iter *iteradorExternoRango[K, V]) verificar_si_HaySiguiente() {
+// verificarSiHaySiguiente() recibe un iterador externo por rangos y, si no hay siguiente, genera un panic con el mensaje "El iterador termino de iterar"
+func (iter *iteradorExternoRango[K, V]) verificarSiHaySiguiente() {
 	if !iter.HaySiguiente() {
 		panic(_MENSAJE_PANIC_FIN_DE_ITERACION_ABB)
 	}
