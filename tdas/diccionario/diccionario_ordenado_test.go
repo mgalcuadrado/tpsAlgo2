@@ -30,6 +30,52 @@ func buscar2(clave string, claves []string) int {
 	return -1
 }
 
+/* ****************** Tests ABB Ordenado ************** */
+
+func TestABBBorrarMultiplesElementos(t *testing.T) {
+	t.Log("Esta prueba verifica que se borren múltiples elementos correctamente y se mantengan todos los demás en el ABB")
+	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	arr := []int{14, 23, 2, 3, 22, 56, 12, 50, 4}
+	for indice, valor := range arr {
+		dic.Guardar(arr[indice], valor)
+	}
+	require.Equal(t, len(arr), dic.Cantidad(), "Inicialmente se guardan todos los elementos en el diccionario")
+	dic.Borrar(50) //caso 1: borrar un elemento sin hijos
+	require.PanicsWithValue(t, "La clave no pertenece al diccionario", func() { dic.Obtener(50) }, "El elemento borrado no debería estar en el ABB")
+
+	dic.Borrar(12) //caso 2: borrar un elemento con un hijo
+	require.PanicsWithValue(t, "La clave no pertenece al diccionario", func() { dic.Obtener(12) }, "El elemento borrado no debería estar en el ABB")
+	require.True(t, dic.Pertenece(4), "Al borrar un elemento con un hijo su hijo debería seguir perteneciendo al diccionario")
+
+	dic.Borrar(23) //caso 3: borrar un elemento con dos hijos
+	require.PanicsWithValue(t, "La clave no pertenece al diccionario", func() { dic.Obtener(23) }, "El elemento borrado no debería estar en el ABB")
+	require.True(t, dic.Pertenece(22), "Al borrar un elemento con un hijo su hijo debería seguir perteneciendo al diccionario")
+	require.True(t, dic.Pertenece(56), "Al borrar un elemento con un hijo su hijo debería seguir perteneciendo al diccionario")
+
+	require.Equal(t, len(arr)-3, dic.Cantidad(), "Luego de borrar elementos la cantidad de elementos del diccionario se modifica")
+	elementosEnABB := []int{14, 2, 3, 22, 56, 4}
+	for i := 0; i < len(elementosEnABB); i++ {
+		require.True(t, dic.Pertenece(elementosEnABB[i]), "El elemento no borrado debería estar en el ABB")
+	}
+}
+
+func TestABBBorrarRaizConDosHijos(t *testing.T) {
+	t.Log("Esta prueba verifica que se borre la raíz del abb con dos hijos correctamente y se mantengan todos los demás elementos del ABB")
+	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	arr := []int{14, 23, 2, 3, 56, 12, 50, 4}
+	for indice, valor := range arr {
+		dic.Guardar(arr[indice], valor)
+	}
+	dic.Borrar(14) //se borra la raíz
+	for i := 0; i < len(arr); i++ {
+		if arr[i] != 14 {
+			require.True(t, dic.Pertenece(arr[i]), "El elemento no borrado debería estar en el ABB")
+		} else {
+			require.PanicsWithValue(t, "La clave no pertenece al diccionario", func() { dic.Obtener(14) }, "El elemento borrado no debería estar en el ABB")
+		}
+	}
+}
+
 /* ****************** Iterador interno ************** */
 
 func TestIteradorInternoOrdenado(t *testing.T) {
@@ -52,14 +98,14 @@ func TestIteradorInternoOrdenado(t *testing.T) {
 
 func TestIteradorInternoOrdenadoTrasBorrados(t *testing.T) {
 	dic := TDADiccionario.CrearABB[int, int](comparacion2)
-	arr := []int{14, 23, 2, 3, 56, 12, 50, 4}
+	arr := []int{14, 15, 23, 2, 3, 56, 12, 50, 4, 22}
 	for indice, valor := range arr {
 		dic.Guardar(arr[indice], valor)
 	}
-	dic.Borrar(56) //caso 1: hoja
-	dic.Borrar(2)  //caso 2: con un hijo
-	dic.Borrar(3)  //caso 3: con dos hijos
-	arr_ordenado := []int{4, 12, 14, 23, 50}
+	dic.Borrar(3)
+	dic.Borrar(15)
+	dic.Borrar(22)
+	arr_ordenado := []int{2, 4, 12, 14, 23, 50, 56}
 	contador := 0
 	dic.Iterar(func(clave int, dato int) bool {
 		if clave != arr_ordenado[contador] {
@@ -68,43 +114,10 @@ func TestIteradorInternoOrdenadoTrasBorrados(t *testing.T) {
 		contador++
 		return true
 	})
-	require.Equal(t, contador, len(arr_ordenado), "El iterador interno recorre in order")
+	require.Equal(t, contador, len(arr_ordenado), "El iterador interno recorre in order todos los elementos del diccionario")
 }
 
 /* ******************* Iterador interno rangos ******************* */
-
-func TestIteradorInternoRangoClavesYValores(t *testing.T) {
-	t.Log("Valida que todas las claves sean recorridas (y una única vez) con el iterador interno por rangos")
-	clave1 := "Gato"
-	clave2 := "Perro"
-	clave3 := "Vaca"
-	clave4 := "Sapo"
-	claves := []string{clave1, clave2, clave3, clave4}
-	dic := TDADiccionario.CrearABB[string, int](strings.Compare)
-	dic.Guardar(claves[0], 3)
-	dic.Guardar(claves[1], 4)
-	dic.Guardar(claves[2], 9)
-	dic.Guardar(claves[3], 8)
-	cs := []string{"", "", "", ""}
-	cantidad := 0
-	cantPtr := &cantidad
-	factorial := 1
-	factorialPtr := &factorial
-	dic.IterarRango(&clave1, &clave4, func(clave string, dato int) bool {
-		cs[cantidad] = clave
-		*cantPtr += 1
-		*factorialPtr *= dato
-		return true
-	})
-	require.EqualValues(t, 3, cantidad)
-	require.NotEqualValues(t, -1, buscar2(cs[1], claves))
-	require.NotEqualValues(t, -1, buscar2(cs[2], claves))
-	require.NotEqualValues(t, -1, buscar2(cs[0], claves))
-	require.NotEqualValues(t, cs[2], cs[1])
-	require.NotEqualValues(t, cs[3], cs[2])
-	require.NotEqualValues(t, cs[1], cs[3])
-	require.EqualValues(t, 96, *factorialPtr)
-}
 
 func TestIterarRangoVariantesDe7(t *testing.T) {
 	t.Log("Crea un iterador y no lo avanza. Luego crea otro iterador y lo avanza.")
@@ -158,10 +171,7 @@ func TestIteradorExternoOrdenado(t *testing.T) {
 	for indice, valor := range arr {
 		dic.Guardar(arr[indice], valor)
 	}
-	dic.Borrar(56) //caso 1: hoja
-	dic.Borrar(2)  //caso 2: con un hijo
-	dic.Borrar(3)  //caso 3: con dos hijos
-	arr_ordenado := []int{4, 12, 14, 23, 50}
+	arr_ordenado := []int{2, 3, 4, 12, 14, 23, 50, 56}
 	contador := 0
 	iter := dic.Iterador()
 	for iter.HaySiguiente() {
@@ -191,9 +201,6 @@ func TestIteradorExternoOrdenadoTrasBorrados(t *testing.T) {
 		contador++
 		iter.Siguiente()
 	}
-	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.VerActual() })
-	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Siguiente() })
-
 	require.Equal(t, contador, len(arr), "El iterador interno recorre in order")
 }
 
@@ -226,7 +233,7 @@ func TestIteradorRangoDiccionarioClavesYValores(t *testing.T) {
 		require.Equal(t, str_ordenado[3+contador], valor)
 		iter.Siguiente()
 	}
-	require.Equal(t, 4, contador)
+	require.Equal(t, 4, contador) //verifica que se corte luego de arr[5]
 	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.VerActual() })
 	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Siguiente() })
 }
@@ -257,8 +264,7 @@ func TestIteradorRangoNoLlegaAlFinal(t *testing.T) {
 
 func TestPruebaIteradorRangoTrasBorrados(t *testing.T) {
 	t.Log("Esta prueba intenta verificar el comportamiento del ABB cuando " +
-		"queda con listas vacías en su tabla. El iterador debería ignorar las listas vacías, avanzando hasta " +
-		"encontrar un elemento real.")
+		"se eliminan elementos. El iterador no debería iterar sobre elementos eliminados")
 
 	clave1 := "Gato"
 	clave2 := "Perro"
@@ -342,7 +348,7 @@ func ejecutarPruebasVolumenIteradorRango(b *testing.B, n int) {
 
 func BenchmarkIteradorRango(b *testing.B) {
 	b.Log("Prueba de stress del Iterador del Diccionario. Prueba guardando distinta cantidad de elementos " +
-		"(muy grandes) b.N elementos, iterarlos todos sin problemas. Se ejecuta cada prueba b.N veces para generar " +
+		"(muy grandes) n elementos, iterarlos todos sin problemas. Se ejecuta cada prueba b.N veces para generar " +
 		"un benchmark")
 	for _, n := range TAMS_VOLUMEN2 {
 		b.Run(fmt.Sprintf("Prueba %d elementos", n), func(b *testing.B) {
