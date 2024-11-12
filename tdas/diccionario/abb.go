@@ -58,16 +58,12 @@ func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func
 		cmp:   cmp,
 		pila:  TDAPila.CrearPilaDinamica[*nodoABB[K, V]](),
 	}
-	if raiz == nil {
-		return iter
-	}
 	nodo := raiz
-	iter.apilarNodosDesdeDerechaHaciaIzquierdaAbajo(raiz)
 	for iter.pila.EstaVacia() {
 		if nodo == nil {
 			break
 		}
-		iter.apilarNodosDesdeDerechaHaciaIzquierdaAbajo(nodo)
+		iter.apilarSiguientes(nodo)
 		nodo = nodo.derecha
 	}
 	return iter
@@ -237,16 +233,16 @@ func (iter *iteradorExternoRango[K, V]) Siguiente() {
 	if nodo.derecha == nil {
 		return
 	}
-	iter.apilarNodosDesdeDerechaHaciaIzquierdaAbajo(nodo.derecha)
+	iter.apilarSiguientes(nodo.derecha)
 }
 
 /***************Funciones auxiliares iterador externo *************/
 
-func (iter *iteradorExternoRango[K, V]) apilarNodosDesdeDerechaHaciaIzquierdaAbajo(nodo *nodoABB[K, V]) {
+func (iter *iteradorExternoRango[K, V]) apilarSiguientes(nodo *nodoABB[K, V]) {
 	nodoActual := nodo
 	for nodoActual != nil {
 		if iter.desde != nil && iter.cmp(nodoActual.clave, *(iter.desde)) < 0 {
-			iter.apilarNodosDesdeDerechaHaciaIzquierdaAbajo(nodoActual.derecha)
+			iter.apilarSiguientes(nodoActual.derecha)
 			break
 		} else if iter.hasta == nil || (iter.hasta != nil && iter.cmp(nodoActual.clave, *(iter.hasta)) <= 0) {
 			iter.pila.Apilar(nodoActual)
