@@ -176,11 +176,7 @@ func (abb *abb[K, V]) obtenerReferenciaValida(clave K) **nodoABB[K, V] {
 
 // Iterar recibe una función visitar y visita in-order todos los nodos del árbol hasta que visitar dé false
 func (abb *abb[K, V]) Iterar(visitar func(clave K, dato V) bool) {
-	if abb == nil {
-		return
-	}
-
-	iterador_interno(abb.raiz, nil, nil, abb.cmp, visitar)
+	abb.IterarRango(nil, nil, visitar)
 }
 
 // Iterar recibe una función visitar y visita in-order todos los nodos del árbol cuyas clavesse encuentren entre lo referenciado por desde y hasta mientras que visitar dé true
@@ -188,31 +184,10 @@ func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato
 	if abb == nil {
 		return
 	}
-
-	iterador_interno(abb.raiz, desde, hasta, abb.cmp, visitar)
+	iteradorInterno(abb.raiz, desde, hasta, abb.cmp, visitar)
 }
 
-// iterador_interno recibe un nodo y una función de verificación para saber si la clave analizada se encuentra o no en el rango
-// no se incluye en la estructura para evitar una dependencia circular, pues puede depender de los límites del rango guardados en el iterador (desde y hasta)
-func iterador_interno[K comparable, V any](nodo *nodoABB[K, V], desde *K, hasta *K, cmp func(K, K) int, visitar func(clave K, dato V) bool) bool {
-	if nodo == nil {
-		return true
-	}
-	//chequea izquierdo
-	if (hasta == nil || cmp(nodo.clave, *hasta) >= 0) && !iterador_interno(nodo.izquierda, desde, hasta, cmp, visitar) {
-		return false
-	}
-	//chequea nodo actual
-	if (desde == nil || cmp(nodo.clave, *desde) <= 0) && (hasta == nil || cmp(nodo.clave, *hasta) >= 0) && !visitar(nodo.clave, nodo.valor) {
-		return false
-	}
-	//chequea derecho
-	if (desde == nil || cmp(nodo.clave, *desde) <= 0) && !iterador_interno(nodo.derecha, desde, hasta, cmp, visitar) {
-		return false
-	}
-	return true
-}
-
+// iteradorInterno recibe un nodo y una función de verificación para saber si la clave analizada se encuentra o no en el rango
 func iteradorInterno[K comparable, V any](nodo *nodoABB[K, V], desde *K, hasta *K, cmp func(K, K) int, visitar func(clave K, dato V) bool) bool {
 	if nodo == nil {
 		return true
