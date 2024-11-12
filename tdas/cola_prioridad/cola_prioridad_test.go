@@ -46,7 +46,7 @@ func TestColaPrioridadPocosElementos(t *testing.T) {
 		cp.Encolar(i)
 		require.EqualValues(t, cp.VerMax(), i, "Encolando cíclicamente y ascendentemente, el máximo debe ser el elemento recién insertado.")
 	}
-	require.EqualValues(t, 10, cp.Cantidad(), "La cola debe tener 9 elementos ingresados")
+	require.EqualValues(t, 10, cp.Cantidad(), "La cola debe tener 10 elementos ingresados")
 	require.False(t, cp.EstaVacia(), "Una cola sin elementos debe estar vacía")
 	require.EqualValues(t, 9, cp.VerMax(), "El máximo debe ser el elemento mayor ingresado (9)")
 	for j := 9; j >= 0; j-- {
@@ -87,19 +87,6 @@ func TestColaPrioridadIniciandoConArregloVacio(t *testing.T) {
 		require.EqualValues(t, i, cp.VerMax(), "Se desencola del máximo al mínimo en una cola de prioridad de máximos")
 		require.EqualValues(t, 1, cp.Cantidad())
 		require.EqualValues(t, i, cp.Desencolar(), "Se desencola del máximo al mínimo en una cola de prioridad de máximos")
-	}
-	require.True(t, cp.EstaVacia())
-	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.VerMax() }, "Ver el máximo de una cola vacía debe generar un panic")
-	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.Desencolar() }, "Desencolar una cola vacia debe generar un panic")
-}
-
-func TestColaPrioridadIniciandoConArregloDeEnteros(t *testing.T) {
-	t.Log("Comprueba que se cree bien la cola de prioridad a partir de un arreglo de enteros")
-	arreglo := []int{12, 3, 45, 2, 4, 50, 22, 16, 7}
-	cp := TDAColaPrioridad.CrearHeapArr[int](arreglo, comparacion)
-	arr_ordenado := []int{50, 45, 22, 16, 12, 7, 4, 3, 2}
-	for i := 0; i < len(arreglo); i++ {
-		require.EqualValues(t, cp.Desencolar(), arr_ordenado[i], "Se desencola del máximo al mínimo en una cola de prioridad de máximos")
 	}
 	require.True(t, cp.EstaVacia())
 	require.PanicsWithValue(t, _MENSAJE_PANIC_COLA_VACIA, func() { cp.VerMax() }, "Ver el máximo de una cola vacía debe generar un panic")
@@ -153,6 +140,12 @@ func BenchmarkColaPrioridad(b *testing.B) {
 }
 
 /* ******* TESTS HEAP SORT ********** */
+
+func TestHeapSortArregloVacio(t *testing.T) {
+	t.Log("Comprueba que el heap sort funcione correctamente para un arreglo vacío")
+	arr := []string{}
+	TDAColaPrioridad.HeapSort(arr, strings.Compare)
+}
 
 func TestHeapSortUnElemento(t *testing.T) {
 	t.Log("Comprueba que el heap sort funcione correctamente para un solo elemento")

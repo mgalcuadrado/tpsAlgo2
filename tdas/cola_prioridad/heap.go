@@ -8,7 +8,7 @@ const (
 	_MENSAJE_PANIC_COLA_VACIA = "La cola esta vacia"
 )
 
-type colaConPrioridad[T any] struct {
+type heap[T any] struct {
 	datos    []T
 	cantidad int
 	cmp      func(T, T) int
@@ -18,7 +18,7 @@ type colaConPrioridad[T any] struct {
 
 // CrearHeapArr recibe una función de comparación y crea una cola de prioridad
 func CrearHeap[T any](funcion_cmp func(T, T) int) ColaPrioridad[T] {
-	return &colaConPrioridad[T]{
+	return &heap[T]{
 		datos:    make([]T, _CAPACIDAD_INICIAL),
 		cmp:      funcion_cmp,
 		cantidad: 0,
@@ -33,7 +33,7 @@ func CrearHeapArr[T any](arreglo []T, funcion_cmp func(T, T) int) ColaPrioridad[
 	arr := make([]T, cap(arreglo))
 	copy(arr, arreglo) //copio el arreglo en memoria nueva para no modificarle el arreglo original a Bárbara!
 	heapify[T](&arr, funcion_cmp)
-	return &colaConPrioridad[T]{
+	return &heap[T]{
 		datos:    arr,
 		cmp:      funcion_cmp,
 		cantidad: len(arr),
@@ -41,12 +41,12 @@ func CrearHeapArr[T any](arreglo []T, funcion_cmp func(T, T) int) ColaPrioridad[
 }
 
 // EstaVacia indica si la cola de prioridad se encuentra vacía
-func (ccp *colaConPrioridad[T]) EstaVacia() bool {
+func (ccp *heap[T]) EstaVacia() bool {
 	return ccp.cantidad == 0
 }
 
 // Encolar recibe un dato y lo encola en función de su prioridad
-func (ccp *colaConPrioridad[T]) Encolar(dato T) {
+func (ccp *heap[T]) Encolar(dato T) {
 	if ccp.cantidad == cap(ccp.datos) {
 		ccp.redimensionar(cap(ccp.datos) * _FACTOR_REDIM)
 	}
@@ -56,7 +56,7 @@ func (ccp *colaConPrioridad[T]) Encolar(dato T) {
 }
 
 // VerMax devuelve el máximo de la cola sin modificarla
-func (ccp *colaConPrioridad[T]) VerMax() T {
+func (ccp *heap[T]) VerMax() T {
 	if ccp.EstaVacia() {
 		panic(_MENSAJE_PANIC_COLA_VACIA)
 	}
@@ -64,7 +64,7 @@ func (ccp *colaConPrioridad[T]) VerMax() T {
 }
 
 // Desencolar saca el elemento de mayor prioridad de la cola y devuelve su valor
-func (ccp *colaConPrioridad[T]) Desencolar() T {
+func (ccp *heap[T]) Desencolar() T {
 	valor := ccp.VerMax()
 	swap(&(ccp.datos), 0, ccp.cantidad-1)
 	ccp.cantidad--
@@ -76,7 +76,7 @@ func (ccp *colaConPrioridad[T]) Desencolar() T {
 }
 
 // Cantidad devuelve la cantidad de elementos en la cola
-func (ccp *colaConPrioridad[T]) Cantidad() int {
+func (ccp *heap[T]) Cantidad() int {
 	return ccp.cantidad
 }
 
@@ -93,7 +93,7 @@ func HeapSort[T any](elementos []T, funcion_cmp func(T, T) int) {
 
 // redimensionar recibe la nueva capacidad que se le quiere asignar al arreglo de datos del heap,
 // y realiza la resimension del mismo
-func (ccp *colaConPrioridad[T]) redimensionar(capacidad int) {
+func (ccp *heap[T]) redimensionar(capacidad int) {
 	datosNuevo := make([]T, capacidad)
 	copy(datosNuevo, ccp.datos)
 	ccp.datos = datosNuevo
@@ -108,7 +108,7 @@ func heapify[T any](arreglo *[]T, funcion_cmp func(T, T) int) {
 
 // upheap recibe una posicion y hace cumplir la propiedad de heap hasta la raíz.
 // upheap asume que hacia arriba hay un heap
-func (ccp *colaConPrioridad[T]) upheap(pos int) {
+func (ccp *heap[T]) upheap(pos int) {
 	if pos == 0 {
 		return
 	}

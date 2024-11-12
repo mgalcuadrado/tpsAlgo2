@@ -189,7 +189,7 @@ func (abb *abb[K, V]) IterarRango(desde *K, hasta *K, visitar func(clave K, dato
 		return
 	}
 
-	iteradorInterno(abb.raiz, desde, hasta, abb.cmp, visitar)
+	iterador_interno(abb.raiz, desde, hasta, abb.cmp, visitar)
 }
 
 // iterador_interno recibe un nodo y una función de verificación para saber si la clave analizada se encuentra o no en el rango
@@ -198,13 +198,16 @@ func iterador_interno[K comparable, V any](nodo *nodoABB[K, V], desde *K, hasta 
 	if nodo == nil {
 		return true
 	}
-	if desde != nil && cmp(nodo.clave, *desde) < 0 && !iterador_interno(nodo.derecha, desde, hasta, cmp, visitar) {
+	//chequea izquierdo
+	if (hasta == nil || cmp(nodo.clave, *hasta) >= 0) && !iterador_interno(nodo.izquierda, desde, hasta, cmp, visitar) {
 		return false
 	}
-	if hasta != nil && cmp(nodo.clave, *hasta) > 0 && !iterador_interno(nodo.izquierda, desde, hasta, cmp, visitar) {
+	//chequea nodo actual
+	if (desde == nil || cmp(nodo.clave, *desde) <= 0) && (hasta == nil || cmp(nodo.clave, *hasta) >= 0) && !visitar(nodo.clave, nodo.valor) {
 		return false
 	}
-	if (nodo.izquierda != nil && !iterador_interno(nodo.izquierda, desde, hasta, cmp, visitar)) || !visitar(nodo.clave, nodo.valor) || (nodo.derecha != nil && !iterador_interno(nodo.derecha, desde, hasta, cmp, visitar)) {
+	//chequea derecho
+	if (desde == nil || cmp(nodo.clave, *desde) <= 0) && !iterador_interno(nodo.derecha, desde, hasta, cmp, visitar) {
 		return false
 	}
 	return true
