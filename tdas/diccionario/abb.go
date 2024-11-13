@@ -59,13 +59,11 @@ func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func
 		pila:  TDAPila.CrearPilaDinamica[*nodoABB[K, V]](),
 	}
 	nodo := raiz
-	for iter.pila.EstaVacia() {
-		if nodo == nil {
-			break
-		}
+
+	if nodo != nil {
 		iter.apilarSiguientes(nodo)
-		nodo = nodo.derecha
 	}
+	
 	return iter
 }
 
