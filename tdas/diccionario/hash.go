@@ -215,8 +215,6 @@ func (iterador *iterHashCerrado[K, V]) Siguiente() {
 	iterador.verificarSiguiente()
 	iterador.indice_actual++
 	iterador.avanzarAlSiguienteOcupado()
-	iterador.indice_actual++
-	iterador.avanzarAlSiguienteOcupado()
 }
 
 // verificarSiguiente() corrobora si hay un siguiente; si no lo hay, da un panic.

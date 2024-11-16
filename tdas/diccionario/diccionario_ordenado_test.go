@@ -11,7 +11,7 @@ import (
 
 var TAMS_VOLUMEN2 = []int{20, 12500, 25000, 50000, 100000}
 
-func comparacion2(v1 int, v2 int) int {
+func comparacion(v1 int, v2 int) int {
 	if v1 > v2 {
 		return v1 - v2
 	} else if v1 < v2 {
@@ -135,7 +135,7 @@ func BenchmarkABB(b *testing.B) {
 
 func TestABBBorrarMultiplesElementos(t *testing.T) {
 	t.Log("Esta prueba verifica que se borren múltiples elementos correctamente y se mantengan todos los demás en el ABB")
-	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	dic := TDADiccionario.CrearABB[int, int](comparacion)
 	arr := []int{14, 23, 2, 3, 22, 56, 12, 50, 4}
 	for indice, valor := range arr {
 		dic.Guardar(arr[indice], valor)
@@ -162,7 +162,7 @@ func TestABBBorrarMultiplesElementos(t *testing.T) {
 
 func TestABBBorrarRaizConDosHijos(t *testing.T) {
 	t.Log("Esta prueba verifica que se borre la raíz del abb con dos hijos correctamente y se mantengan todos los demás elementos del ABB")
-	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	dic := TDADiccionario.CrearABB[int, int](comparacion)
 	arr := []int{14, 23, 2, 3, 56, 12, 50, 4}
 	for indice, valor := range arr {
 		dic.Guardar(arr[indice], valor)
@@ -179,7 +179,7 @@ func TestABBBorrarRaizConDosHijos(t *testing.T) {
 
 /* ****************** Iterador interno ************** */
 func TestIterarInternoConCorte(t *testing.T) {
-	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	dic := TDADiccionario.CrearABB[int, int](comparacion)
 	arr := []int{14, 23, 2, 56, 12, 50, 4}
 	for indice, valor := range arr {
 		dic.Guardar(arr[indice], valor)
@@ -195,7 +195,7 @@ func TestIterarInternoConCorte(t *testing.T) {
 }
 
 func TestIteradorInternoOrdenado(t *testing.T) {
-	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	dic := TDADiccionario.CrearABB[int, int](comparacion)
 	arr := []int{14, 24, 2, 3, 56, 12, 50, 4}
 	for indice, valor := range arr {
 		dic.Guardar(arr[indice], valor)
@@ -225,7 +225,7 @@ func TestIterarRangoABBVacio(t *testing.T) {
 }
 func TestIterarRangoVariantesDe7(t *testing.T) {
 	t.Log("Crea un iterador y no lo avanza. Luego crea otro iterador y lo avanza.")
-	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	dic := TDADiccionario.CrearABB[int, int](comparacion)
 	arr := []int{3, 1, 2, 4, 5, 6, 7}
 	for i, _ := range arr {
 		dic.Guardar(arr[i], arr[i])
@@ -243,7 +243,7 @@ func TestIterarRangoVariantesDe7(t *testing.T) {
 func TestVolumenIteradorRangoCorte(t *testing.T) {
 	t.Log("Prueba de volumen de iterador interno, para validar que siempre que se indique que se corte" +
 		" la iteración con la función visitar, se corte")
-	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	dic := TDADiccionario.CrearABB[int, int](comparacion)
 	/* Inserta 'n' parejas en el abb */
 	for i := 0; i < 10000; i++ {
 		dic.Guardar(i, i)
@@ -270,7 +270,7 @@ func TestVolumenIteradorRangoCorte(t *testing.T) {
 /* ******************* Iterador externo ******************* */
 
 func TestIteradorExternoOrdenado(t *testing.T) {
-	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	dic := TDADiccionario.CrearABB[int, int](comparacion)
 	arr := []int{14, 23, 2, 3, 56, 12, 50, 4}
 	for indice, valor := range arr {
 		dic.Guardar(arr[indice], valor)
@@ -302,7 +302,7 @@ func TestIteradorRangoDiccionarioVacio(t *testing.T) {
 
 func TestIteradorRangoDiccionarioClavesYValores(t *testing.T) {
 	t.Log("Se guardan claves de tipo int y valores de tipo string y se itera con el iterador externo en un rango de valores. El test verifica que se itere in order")
-	dic := TDADiccionario.CrearABB[int, string](comparacion2)
+	dic := TDADiccionario.CrearABB[int, string](comparacion)
 	arr := []int{3, 15, 2, 12, 54, 20, 37, 33, 16, 7}
 	arr_ordenado := []int{2, 3, 7, 12, 15, 16, 20, 33, 37, 54}
 	str := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
@@ -324,7 +324,7 @@ func TestIteradorRangoDiccionarioClavesYValores(t *testing.T) {
 }
 
 func ejecutarPruebasVolumenIteradorRango(b *testing.B, n int) {
-	dic := TDADiccionario.CrearABB[int, *int](comparacion2)
+	dic := TDADiccionario.CrearABB[int, *int](comparacion)
 
 	claves := make([]int, n)
 	valores := make([]int, n)
@@ -391,7 +391,7 @@ func BenchmarkIteradorRango(b *testing.B) {
 
 func TestIteradorRangoVariantesDe7(t *testing.T) {
 	t.Log("Crea un iterador y no lo avanza. Luego crea otro iterador y lo avanza.")
-	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	dic := TDADiccionario.CrearABB[int, int](comparacion)
 	arr := []int{3, 1, 2, 4, 5, 6, 7}
 	for i, _ := range arr {
 		dic.Guardar(arr[i], arr[i])
@@ -409,7 +409,7 @@ func TestIteradorRangoVariantesDe7(t *testing.T) {
 }
 
 func TestIteradorRangoCasoBorde(t *testing.T) {
-	dic := TDADiccionario.CrearABB[int, int](comparacion2)
+	dic := TDADiccionario.CrearABB[int, int](comparacion)
 	arr := []int{10, 5, 7, 9}
 	for i, _ := range arr {
 		dic.Guardar(arr[i], arr[i])
