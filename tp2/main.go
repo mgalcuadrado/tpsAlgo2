@@ -4,10 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-
-	//"strconv"
 	"strings"
-	//TDADiccionario "tdas/diccionario"
 	TDARegistros "tp2/registros"
 )
 
@@ -29,7 +26,7 @@ func main() {
 		linea := entrada.Text()
 		input := strings.Split(linea, " ")
 		if !reg.Operar(input) {
-			fmt.Fprintf(os.Stdout, "%s %s\n", _MENSAJE_ERROR, input[0])
+			fmt.Fprintf(os.Stderr, "%s %s\n", _MENSAJE_ERROR, input[0])
 		} else {
 			fmt.Fprintf(os.Stdout, "%s\n", _MENSAJE_OK)
 		}

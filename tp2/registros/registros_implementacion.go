@@ -50,14 +50,12 @@ type registros struct {
 func (reg *registros) AgregarArchivo(ruta string) bool {
 	archivo := abrirArchivo(ruta)
 	if archivo == nil {
-		fmt.Printf("No se pudo abrir el archivo\n") //revisar: sacar esto
 		cerrarArchivo(archivo)
 		return false
 	}
 	reg.registroActual = ruta
 	error, heap := reg.lecturaDeArchivo(archivo)
 	if error != nil {
-		//fmt.Printf("Error en la lectura del archivo\n") //revisar: sacar esto
 		cerrarArchivo(archivo)
 		return false
 	}
@@ -72,7 +70,9 @@ func (reg *registros) AgregarArchivo(ruta string) bool {
 func (reg *registros) VerVisitantes(desde IPv4, hasta IPv4) bool {
 	fmt.Fprintf(os.Stdout, "Visitantes:\n")
 	reg.abbIPs.IterarRango(&desde, &hasta, func(ip IPv4, dato datos_diccionario) bool {
+		//if strings.Compare(dato.ultimaVisita, reg.registroActual) == 0 {
 		fmt.Fprintf(os.Stdout, "\t%d.%d.%d.%d\n", ip.partes[0], ip.partes[1], ip.partes[2], ip.partes[3])
+		//}
 		return true
 	})
 	return true
@@ -110,12 +110,10 @@ func CrearRegistros() *registros {
 
 func (reg *registros) Operar(input []string) bool {
 	if !reg.funcionesDisponibles.Pertenece(input[0]) || reg.funcionesDisponibles.Obtener(input[0]) != len(input) {
-		//fmt.Printf("Comando mal pasado\n") //revisar: sacar esto
 		return false //revisar: no me acuerdo de si hay que seguir
 	}
 	//revisar: tiene que haber una mejor forma de hacer esto pero... no la estoy viendo
 	if strings.Compare(input[0], "agregar_archivo") == 0 {
-		//fmt.Printf("Entro a agregar_archivo\n") //revisar: sacar esto
 		return reg.AgregarArchivo(input[1])
 	}
 	if strings.Compare(input[0], "ver_visitantes") == 0 {
@@ -132,7 +130,6 @@ func (reg *registros) Operar(input []string) bool {
 func abrirArchivo(ruta string) *os.File {
 	archivo, err := os.Open(ruta)
 	if err != nil {
-		//fmt.Printf("Error al abrir el archivo\n") //revisar: sacar esto
 		return nil
 	}
 	return archivo
@@ -148,7 +145,6 @@ func (reg *registros) lecturaDeArchivo(archivo *os.File) (error, TDAColaPriorida
 	for entrada.Scan() {
 		campos := strings.Split(entrada.Text(), "\t")
 		if len(campos) != _CANTIDAD_CAMPOS_REGISTROS {
-			//fmt.Printf("Campos erróneos en registro\n") //revisar: sacar esto
 			return errors.New("Error"), nil
 		}
 		reg.actualizarABBIPs(campos, heap)
@@ -183,7 +179,7 @@ func (reg *registros) actualizarSitiosVisitados(sitio string) {
 		cantidad := reg.hashSitiosVisitados.Obtener(sitio)
 		reg.hashSitiosVisitados.Guardar(sitio, cantidad+1)
 	} else {
-		//sitioVisitado := memcopy(sitio)
+		//sitioVisitado := memcopy(sitio) //revisar: me gustaría duplicar la cadena pero no me acuerdo de cómo JAJAJAAJ
 		reg.hashSitiosVisitados.Guardar(sitio, 1)
 	}
 }
