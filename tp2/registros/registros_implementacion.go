@@ -33,6 +33,11 @@ type datos_diccionario struct {
 	ataqueDoSReportado bool
 }
 
+type sitioVisitado struct {
+	sitio           string
+	cantidadVisitas int
+}
+
 type registros struct {
 	funcionesDisponibles TDADiccionario.Diccionario[string, int]
 	abbIPs               TDADiccionario.DiccionarioOrdenado[IPv4, datos_diccionario]
@@ -65,10 +70,29 @@ func (reg *registros) AgregarArchivo(ruta string) bool {
 }
 
 func (reg *registros) VerVisitantes(desde IPv4, hasta IPv4) bool {
+	fmt.Fprintf(os.Stdout, "Visitantes:")
+	reg.abbIPs.IterarRango(&desde, &hasta, func(ip IPv4, dato datos_diccionario) bool {
+		fmt.Fprintf(os.Stdout, "\t%d.%d.%d.%d\n", ip.partes[0], ip.partes[1], ip.partes[2], ip.partes[3])
+		return true
+	})
 	return true
 }
 
 func (reg *registros) VerMasVisitados(n int) bool {
+	heap := TDAColaPrioridad.CrearHeap(compararSitiosVisitados)
+	reg.hashSitiosVisitados.Iterar(func(clave string, dato int) bool {
+		valor := sitioVisitado{
+			sitio:           clave,
+			cantidadVisitas: dato,
+		}
+		heap.Encolar(valor)
+		return true
+	})
+	fmt.Fprintf(os.Stdout, "Sitios más visitados:")
+	for i := 0; i < n && !heap.EstaVacia(); i++ {
+		valor := heap.Desencolar()
+		fmt.Fprintf(os.Stdout, "\t%s - %d\n", valor.sitio, valor.cantidadVisitas)
+	}
 	return true
 }
 
@@ -169,4 +193,9 @@ func resetearDatos(datos **datos_diccionario, log string, t time.Time) {
 	(*datos).tiempo = t
 	(*datos).visitasDesdeTiempo = 1
 	(*datos).ataqueDoSReportado = false
+}
+
+// compararSitiosVisitados devuelve un número menor a cero si s1 < s2, 0 si s1=s2 y un número mayor a cero si s1>s2
+func compararSitiosVisitados(s1 sitioVisitado, s2 sitioVisitado) int {
+	return s1.cantidadVisitas - s2.cantidadVisitas
 }
