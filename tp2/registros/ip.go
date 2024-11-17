@@ -38,3 +38,14 @@ func IPCompare(ip1 IPv4, ip2 IPv4) int {
 	}
 	return 0
 }
+
+func IPCompareInverso(ip1 IPv4, ip2 IPv4) int {
+	for i, _ := range ip1.partes {
+		if ip1.partes[i] < ip2.partes[i] {
+			return 1
+		} else if ip1.partes[i] > ip2.partes[i] {
+			return -1
+		}
+	}
+	return 0
+}
