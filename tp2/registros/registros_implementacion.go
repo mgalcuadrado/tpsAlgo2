@@ -70,7 +70,7 @@ func (reg *registros) AgregarArchivo(ruta string) bool {
 }
 
 func (reg *registros) VerVisitantes(desde IPv4, hasta IPv4) bool {
-	fmt.Fprintf(os.Stdout, "Visitantes:")
+	fmt.Fprintf(os.Stdout, "Visitantes:\n")
 	reg.abbIPs.IterarRango(&desde, &hasta, func(ip IPv4, dato datos_diccionario) bool {
 		fmt.Fprintf(os.Stdout, "\t%d.%d.%d.%d\n", ip.partes[0], ip.partes[1], ip.partes[2], ip.partes[3])
 		return true
@@ -88,7 +88,7 @@ func (reg *registros) VerMasVisitados(n int) bool {
 		heap.Encolar(valor)
 		return true
 	})
-	fmt.Fprintf(os.Stdout, "Sitios más visitados:")
+	fmt.Fprintf(os.Stdout, "Sitios más visitados:\n")
 	for i := 0; i < n && !heap.EstaVacia(); i++ {
 		valor := heap.Desencolar()
 		fmt.Fprintf(os.Stdout, "\t%s - %d\n", valor.sitio, valor.cantidadVisitas)
