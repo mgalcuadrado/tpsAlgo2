@@ -33,13 +33,6 @@ type datos_diccionario struct {
 	ataqueDoSReportado bool
 }
 
-/*
-type sitiosVisitados struct {
-	sitio            string
-	cantidad_visitas int
-}
-*/
-
 type registros struct {
 	funcionesDisponibles TDADiccionario.Diccionario[string, int]
 	abbIPs               TDADiccionario.DiccionarioOrdenado[IPv4, datos_diccionario]
