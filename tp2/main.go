@@ -28,6 +28,8 @@ func main() {
 	for entrada.Scan() { //devuelve false cuando no hay nada más que leer
 		linea := entrada.Text()
 		input := strings.Split(linea, " ")
+		fmt.Fprintf(os.Stdout, "###%s###\n", input[0]) //revisar: sacar esto
+		fmt.Fprintf(os.Stdout, "###%s###\n", input[1]) //revisar: sacar esto
 		if !reg.Operar(input) {
 			fmt.Fprintf(os.Stdout, "%s %s\n", _MENSAJE_ERROR, input[0])
 		} else {

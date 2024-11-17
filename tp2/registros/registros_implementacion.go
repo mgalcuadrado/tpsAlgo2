@@ -52,11 +52,15 @@ type registros struct {
 func (reg *registros) AgregarArchivo(ruta string) bool {
 	archivo := abrirArchivo(ruta)
 	if archivo == nil {
+		fmt.Printf("No se pudo abrir el archivo\n") //revisar: sacar esto
+		cerrarArchivo(archivo)
 		return false
 	}
 	reg.registroActual = ruta
 	error, heap := reg.lecturaDeArchivo(archivo)
 	if error != nil {
+		fmt.Printf("Error en la lectura del archivo\n") //revisar: sacar esto
+		cerrarArchivo(archivo)
 		return false
 	}
 	for !heap.EstaVacia() {
@@ -89,11 +93,12 @@ func CrearRegistros() *registros {
 
 func (reg *registros) Operar(input []string) bool {
 	if !reg.funcionesDisponibles.Pertenece(input[0]) || reg.funcionesDisponibles.Obtener(input[0]) != len(input) {
-		fmt.Printf("%s %s\n", _MENSAJE_ERROR, input[0])
-		return false //revisar: no me acuerdo de si hay que seguir
+		fmt.Printf("Comando mal pasado\n") //revisar: sacar esto
+		return false                       //revisar: no me acuerdo de si hay que seguir
 	}
 	//revisar: tiene que haber una mejor forma de hacer esto pero... no la estoy viendo
 	if strings.Compare(input[0], "agregar_archivo") == 0 {
+		fmt.Printf("Entro a agregar_archivo\n") //revisar: sacar esto
 		return reg.AgregarArchivo(input[1])
 	}
 	if strings.Compare(input[0], "ver_visitantes") == 0 {
@@ -110,13 +115,14 @@ func (reg *registros) Operar(input []string) bool {
 func abrirArchivo(ruta string) *os.File {
 	archivo, err := os.Open(ruta)
 	if err != nil {
+		fmt.Printf("Error al abrir el archivo\n") //revisar: sacar esto
 		return nil
 	}
 	return archivo
 }
 
-func cerrarArchivo(archivo *os.File) {
-	archivo.Close()
+func cerrarArchivo(archivo *os.File) error {
+	return archivo.Close()
 }
 
 func (reg *registros) lecturaDeArchivo(archivo *os.File) (error, TDAColaPrioridad.ColaPrioridad[IPv4]) {
@@ -125,6 +131,7 @@ func (reg *registros) lecturaDeArchivo(archivo *os.File) (error, TDAColaPriorida
 	for entrada.Scan() {
 		campos := strings.Split(entrada.Text(), "\t")
 		if len(campos) != _CANTIDAD_CAMPOS_REGISTROS {
+			fmt.Printf("Campos erróneos en registro\n") //revisar: sacar esto
 			return errors.New("Error"), nil
 		}
 		reg.actualizarABBIPs(campos, heap)
