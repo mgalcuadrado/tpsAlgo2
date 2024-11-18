@@ -26,7 +26,6 @@ const (
 )
 
 type registros struct {
-	funcionesDisponibles       TDADiccionario.Diccionario[string, int]
 	diccionarioIPs             TDADiccionario.DiccionarioOrdenado[IPv4, datosDiccionarioIPs]
 	diccionarioSitiosVisitados TDADiccionario.Diccionario[string, int]
 	registroActual             string
@@ -103,18 +102,20 @@ func CrearRegistros() *registros {
 	reg := new(registros)
 	reg.diccionarioIPs = TDADiccionario.CrearABB[IPv4, datosDiccionarioIPs](IPCompare)
 	reg.diccionarioSitiosVisitados = TDADiccionario.CrearHash[string, int]()
-	reg.funcionesDisponibles = TDADiccionario.CrearHash[string, int]()
-	//clave = entradas del usuario, dato = cantidad de parámetros recibidos por linea de comandos (contando la función)
-	reg.funcionesDisponibles.Guardar("agregar_archivo", _AGREGAR_ARCHIVO_PARAMETROS)
-	reg.funcionesDisponibles.Guardar("ver_visitantes", _VER_VISITANTES_PARAMETROS)
-	reg.funcionesDisponibles.Guardar("ver_mas_visitados", _VER_MAS_VISITADOS_PARAMETROS)
 	return reg
 }
 
 // Operar realiza la operación solicitada.
 // Devuelve un booleano indicando si la operación se pudo realizar correctamente.
 func (reg *registros) Operar(input []string) bool {
-	if !reg.funcionesDisponibles.Pertenece(input[0]) || reg.funcionesDisponibles.Obtener(input[0]) != len(input) {
+	//Crear diccionario de funciones disponibles
+	funcionesDisponibles := TDADiccionario.CrearHash[string, int]()
+	//clave = entradas del usuario, dato = cantidad de parámetros recibidos por linea de comandos (contando la función)
+	funcionesDisponibles.Guardar("agregar_archivo", _AGREGAR_ARCHIVO_PARAMETROS)
+	funcionesDisponibles.Guardar("ver_visitantes", _VER_VISITANTES_PARAMETROS)
+	funcionesDisponibles.Guardar("ver_mas_visitados", _VER_MAS_VISITADOS_PARAMETROS)
+
+	if !funcionesDisponibles.Pertenece(input[0]) || funcionesDisponibles.Obtener(input[0]) != len(input) {
 		return false
 	}
 	//revisar: tiene que haber una mejor forma de hacer esto pero... no la estoy viendo
