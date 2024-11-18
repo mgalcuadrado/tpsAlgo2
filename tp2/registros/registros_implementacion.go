@@ -195,7 +195,6 @@ func (reg *registros) actualizarSitiosVisitados(sitio string) {
 		cantidad := reg.diccionarioSitiosVisitados.Obtener(sitio)
 		reg.diccionarioSitiosVisitados.Guardar(sitio, cantidad+1)
 	} else {
-		//sitioVisitado := memcopy(sitio) //revisar: me gustaría duplicar la cadena pero no me acuerdo de cómo JAJAJAAJ
 		reg.diccionarioSitiosVisitados.Guardar(sitio, 1)
 	}
 }
