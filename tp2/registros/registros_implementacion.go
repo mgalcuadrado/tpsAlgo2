@@ -2,7 +2,6 @@ package registros
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -14,7 +13,7 @@ import (
 
 const (
 	_MENSAJE_ERROR                string        = "Error en comando" //revisar: este no es el texto correcto
-	timeToLive                    time.Duration = 2000000000         //tiempo (en ns) en el que se cuentan los pedidos para analizar ataque DoS
+	_TIME_TO_LIVE                 time.Duration = 2 * time.Second    //tiempo (en ns) en el que se cuentan los pedidos para analizar ataque DoS
 	_CAPACIDAD_INICIAL_SITIOS     int           = 8
 	_AGREGAR_ARCHIVO_COMANDO      string        = "agregar_archivo"
 	_VER_VISITANTES_COMANDO       string        = "ver_visitantes"
@@ -54,8 +53,8 @@ func (reg *registros) AgregarArchivo(ruta string) bool {
 		return false
 	}
 	reg.registroActual = ruta
-	error, heap := reg.lecturaDeArchivo(archivo)
-	if error != nil {
+	heap := reg.lecturaDeArchivo(archivo)
+	if heap == nil {
 		cerrarArchivo(archivo)
 		return false
 	}
@@ -139,23 +138,26 @@ func cerrarArchivo(archivo *os.File) error {
 	return archivo.Close()
 }
 
-func (reg *registros) lecturaDeArchivo(archivo *os.File) (error, TDAColaPrioridad.ColaPrioridad[IPv4]) {
+func (reg *registros) lecturaDeArchivo(archivo *os.File) TDAColaPrioridad.ColaPrioridad[IPv4] {
 	entrada := bufio.NewScanner(archivo)
 	heap := TDAColaPrioridad.CrearHeap[IPv4](IPCompareInverso)
+	//contador := 0 //revisar: sacar esto
 	for entrada.Scan() {
 		campos := strings.Split(entrada.Text(), "\t")
 		if len(campos) != _CANTIDAD_CAMPOS_REGISTROS {
-			return errors.New("Error"), nil
+			return nil
 		}
+		//fmt.Printf("%d\t", contador) //revisar: sacar esto
+		//contador++                   //revisar: sacar esto
 		reg.actualizarABBIPs(campos, heap)
 		reg.actualizarSitiosVisitados(campos[3])
 	}
-	return nil, heap
+	return heap
 }
 
 func (reg *registros) actualizarABBIPs(campos []string, heap TDAColaPrioridad.ColaPrioridad[IPv4]) {
 	ip := IPParsear(campos[0])
-	tiempo, _ := time.Parse(time.DateTime, campos[1])
+	tiempo, _ := time.Parse(time.RFC3339, campos[1])
 	datos := new(datos_diccionario)
 	if !reg.abbIPs.Pertenece(ip) {
 		resetearDatos(&datos, reg.registroActual, tiempo)
@@ -163,12 +165,15 @@ func (reg *registros) actualizarABBIPs(campos []string, heap TDAColaPrioridad.Co
 		*datos = reg.abbIPs.Obtener(ip)
 		if strings.Compare((*datos).ultimaVisita, reg.registroActual) != 0 {
 			resetearDatos(&datos, reg.registroActual, tiempo)
-		} else if !(*datos).ataqueDoSReportado && tiempo.Sub((*datos).tiempo) < timeToLive {
+		} else if (*datos).ataqueDoSReportado {
+		} else if tiempo.Sub((*datos).tiempo) < _TIME_TO_LIVE {
 			(*datos).visitasDesdeTiempo++
-			if (*datos).visitasDesdeTiempo >= _CANTIDAD_LIMITE_ATAQUE_DOS {
+			if (*datos).visitasDesdeTiempo == _CANTIDAD_LIMITE_ATAQUE_DOS {
 				heap.Encolar(ip)
 				(*datos).ataqueDoSReportado = true
 			}
+		} else if tiempo.Sub((*datos).tiempo) >= _TIME_TO_LIVE {
+			resetearDatos(&datos, reg.registroActual, tiempo)
 		}
 	}
 	reg.abbIPs.Guardar(ip, *datos)
