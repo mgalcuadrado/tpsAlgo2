@@ -27,7 +27,7 @@ func main() {
 		input := strings.Split(linea, " ")
 		//Si la operación no es válida u ocurre un error al realizarse la misma imprime "Error en comando <comando>" por la salida de errores.
 		//Si la operación se pudo realizar correctamente imprime "OK" por salida estándar.
-		if !reg.Operar(input) {
+		if !reg.RealizarOperacion(input) {
 			fmt.Fprintf(os.Stderr, "%s %s\n", _MENSAJE_ERROR, input[0])
 		} else {
 			fmt.Fprintf(os.Stdout, "%s\n", _MENSAJE_OK)

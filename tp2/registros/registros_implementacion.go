@@ -105,31 +105,29 @@ func CrearRegistros() *registros {
 	return reg
 }
 
-// Operar realiza la operación solicitada.
+// RealizarOperacion realiza la operación solicitada.
 // Devuelve un booleano indicando si la operación se pudo realizar correctamente.
-func (reg *registros) Operar(input []string) bool {
-	//Crear diccionario de funciones disponibles
-	funcionesDisponibles := TDADiccionario.CrearHash[string, int]()
-	//clave = entradas del usuario, dato = cantidad de parámetros recibidos por linea de comandos (contando la función)
-	funcionesDisponibles.Guardar("agregar_archivo", _AGREGAR_ARCHIVO_PARAMETROS)
-	funcionesDisponibles.Guardar("ver_visitantes", _VER_VISITANTES_PARAMETROS)
-	funcionesDisponibles.Guardar("ver_mas_visitados", _VER_MAS_VISITADOS_PARAMETROS)
-
-	if !funcionesDisponibles.Pertenece(input[0]) || funcionesDisponibles.Obtener(input[0]) != len(input) {
-		return false
-	}
-	//revisar: tiene que haber una mejor forma de hacer esto pero... no la estoy viendo
-	if strings.Compare(input[0], "agregar_archivo") == 0 {
+func (reg *registros) RealizarOperacion(input []string) bool {
+	switch input[0] {
+	case _AGREGAR_ARCHIVO_COMANDO:
+		if len(input) != _AGREGAR_ARCHIVO_PARAMETROS {
+			return false
+		}
 		return reg.AgregarArchivo(input[1])
-	}
-	if strings.Compare(input[0], "ver_visitantes") == 0 {
+	case _VER_VISITANTES_COMANDO:
+		if len(input) != _VER_VISITANTES_PARAMETROS {
+			return false
+		}
 		return reg.VerVisitantes(IPParsear(input[1]), IPParsear(input[2]))
-	}
-	if strings.Compare(input[0], "ver_mas_visitados") == 0 {
+	case _VER_MAS_VISITADOS_COMANDO:
+		if len(input) != _VER_MAS_VISITADOS_PARAMETROS {
+			return false
+		}
 		n, _ := strconv.Atoi(input[1])
 		return reg.VerMasVisitados(n)
+	default:
+		return false
 	}
-	return true
 }
 
 /* ********** FUNCIONES AUXILIARES ********** */
