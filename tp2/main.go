@@ -25,6 +25,8 @@ func main() {
 	for entrada.Scan() { //devuelve false cuando no hay nada más que leer
 		linea := entrada.Text()
 		input := strings.Split(linea, " ")
+		//Si la operación no es válida u ocurre un error al realizarse la misma imprime "Error en comando <comando>" por la salida de errores.
+		//Si la operación se pudo realizar correctamente imprime "OK" por salida estándar.
 		if !reg.Operar(input) {
 			fmt.Fprintf(os.Stderr, "%s %s\n", _MENSAJE_ERROR, input[0])
 		} else {

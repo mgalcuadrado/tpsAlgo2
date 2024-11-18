@@ -12,8 +12,10 @@ import (
 )
 
 const (
-	_MENSAJE_ERROR                string        = "Error en comando" //revisar: este no es el texto correcto
-	_TIME_TO_LIVE                 time.Duration = 2 * time.Second    //tiempo (en ns) en el que se cuentan los pedidos para analizar ataque DoS
+	_MENSAJE_ERROR                string        = "Error en comando"
+	_CANTIDAD_LIMITE_ATAQUE_DOS   int           = 5
+	_TIME_TO_LIVE                 time.Duration = 2 * time.Second //tiempo en el que se cuentan las requests de la página para analizar ataques DoS
+	_CANTIDAD_CAMPOS_REGISTROS    int           = 4
 	_CAPACIDAD_INICIAL_SITIOS     int           = 8
 	_AGREGAR_ARCHIVO_COMANDO      string        = "agregar_archivo"
 	_VER_VISITANTES_COMANDO       string        = "ver_visitantes"
@@ -21,11 +23,16 @@ const (
 	_AGREGAR_ARCHIVO_PARAMETROS   int           = 2
 	_VER_VISITANTES_PARAMETROS    int           = 3
 	_VER_MAS_VISITADOS_PARAMETROS int           = 2
-	_CANTIDAD_CAMPOS_REGISTROS    int           = 4
-	_CANTIDAD_LIMITE_ATAQUE_DOS   int           = 5
 )
 
-type datos_diccionario struct {
+type registros struct {
+	funcionesDisponibles       TDADiccionario.Diccionario[string, int]
+	diccionarioIPs             TDADiccionario.DiccionarioOrdenado[IPv4, datosDiccionarioIPs]
+	diccionarioSitiosVisitados TDADiccionario.Diccionario[string, int]
+	registroActual             string
+}
+
+type datosDiccionarioIPs struct {
 	ultimaVisita       string
 	tiempo             time.Time
 	visitasDesdeTiempo int
@@ -37,15 +44,9 @@ type sitioVisitado struct {
 	cantidadVisitas int
 }
 
-type registros struct {
-	funcionesDisponibles TDADiccionario.Diccionario[string, int]
-	abbIPs               TDADiccionario.DiccionarioOrdenado[IPv4, datos_diccionario]
-	hashSitiosVisitados  TDADiccionario.Diccionario[string, int]
-	registroActual       string
-	//guardamos un hash de sitios visitados (por nombre del sitio), lo iteramos para guardarlo en un arreglo y le hacemos HeapSort y los vamos sacando en ese orden
-	//inicialmente había pensado directo en una cola de prioridad, pero me cuesta encontrar los elementos para actualizarlos
-}
-
+// AgregarArchivo recibe la ruta de un log y lo agrega al registro.
+// Adicionalmente, imprime por salida estándar las IPs que realizaron ataques DoS en orden creciente.
+// Devuelve un booleano indicando si la operación se pudo realizar correctamente.
 func (reg *registros) AgregarArchivo(ruta string) bool {
 	archivo := abrirArchivo(ruta)
 	if archivo == nil {
@@ -53,52 +54,55 @@ func (reg *registros) AgregarArchivo(ruta string) bool {
 		return false
 	}
 	reg.registroActual = ruta
-	heap := reg.lecturaDeArchivo(archivo)
-	if heap == nil {
+	colaAtaquesDoS := reg.lecturaDeArchivo(archivo)
+	if colaAtaquesDoS == nil {
 		cerrarArchivo(archivo)
 		return false
 	}
-	for !heap.EstaVacia() {
-		ip := heap.Desencolar()
+	for !colaAtaquesDoS.EstaVacia() {
+		ip := colaAtaquesDoS.Desencolar()
 		fmt.Fprintf(os.Stdout, "DoS: %d.%d.%d.%d\n", ip.partes[0], ip.partes[1], ip.partes[2], ip.partes[3])
 	}
 	cerrarArchivo(archivo)
 	return true
 }
 
+// VerVisitantes imprime por salida estándar las IPs comprendidas entre desde y hasta que visitaron páginas marcadas en el registro.
+// Devuelve un booleano indicando si la operación se pudo realizar correctamente.
 func (reg *registros) VerVisitantes(desde IPv4, hasta IPv4) bool {
 	fmt.Fprintf(os.Stdout, "Visitantes:\n")
-	reg.abbIPs.IterarRango(&desde, &hasta, func(ip IPv4, dato datos_diccionario) bool {
-		//if strings.Compare(dato.ultimaVisita, reg.registroActual) == 0 {
+	reg.diccionarioIPs.IterarRango(&desde, &hasta, func(ip IPv4, dato datosDiccionarioIPs) bool {
 		fmt.Fprintf(os.Stdout, "\t%d.%d.%d.%d\n", ip.partes[0], ip.partes[1], ip.partes[2], ip.partes[3])
-		//}
 		return true
 	})
 	return true
 }
 
+// VerMasVisitados imprime por salida estándar las n páginas más visitadas registradas en el registro.
+// Devuelve un booleano indicando si la operación se pudo realizar correctamente.
 func (reg *registros) VerMasVisitados(n int) bool {
-	heap := TDAColaPrioridad.CrearHeap(compararSitiosVisitados)
-	reg.hashSitiosVisitados.Iterar(func(clave string, dato int) bool {
+	colaSitiosVisitados := TDAColaPrioridad.CrearHeap(compararSitiosVisitados)
+	reg.diccionarioSitiosVisitados.Iterar(func(clave string, dato int) bool {
 		valor := sitioVisitado{
 			sitio:           clave,
 			cantidadVisitas: dato,
 		}
-		heap.Encolar(valor)
+		colaSitiosVisitados.Encolar(valor)
 		return true
 	})
 	fmt.Fprintf(os.Stdout, "Sitios más visitados:\n")
-	for i := 0; i < n && !heap.EstaVacia(); i++ {
-		valor := heap.Desencolar()
+	for i := 0; i < n && !colaSitiosVisitados.EstaVacia(); i++ {
+		valor := colaSitiosVisitados.Desencolar()
 		fmt.Fprintf(os.Stdout, "\t%s - %d\n", valor.sitio, valor.cantidadVisitas)
 	}
 	return true
 }
 
+// CrearRegistros crea un registro para que se puedan realizar las operaciones de la interfaz
 func CrearRegistros() *registros {
 	reg := new(registros)
-	reg.abbIPs = TDADiccionario.CrearABB[IPv4, datos_diccionario](IPCompare)
-	reg.hashSitiosVisitados = TDADiccionario.CrearHash[string, int]()
+	reg.diccionarioIPs = TDADiccionario.CrearABB[IPv4, datosDiccionarioIPs](IPCompare)
+	reg.diccionarioSitiosVisitados = TDADiccionario.CrearHash[string, int]()
 	reg.funcionesDisponibles = TDADiccionario.CrearHash[string, int]()
 	//clave = entradas del usuario, dato = cantidad de parámetros recibidos por linea de comandos (contando la función)
 	reg.funcionesDisponibles.Guardar("agregar_archivo", _AGREGAR_ARCHIVO_PARAMETROS)
@@ -107,9 +111,11 @@ func CrearRegistros() *registros {
 	return reg
 }
 
+// Operar realiza la operación solicitada.
+// Devuelve un booleano indicando si la operación se pudo realizar correctamente.
 func (reg *registros) Operar(input []string) bool {
 	if !reg.funcionesDisponibles.Pertenece(input[0]) || reg.funcionesDisponibles.Obtener(input[0]) != len(input) {
-		return false //revisar: no me acuerdo de si hay que seguir
+		return false
 	}
 	//revisar: tiene que haber una mejor forma de hacer esto pero... no la estoy viendo
 	if strings.Compare(input[0], "agregar_archivo") == 0 {
@@ -126,6 +132,9 @@ func (reg *registros) Operar(input []string) bool {
 }
 
 /* ********** FUNCIONES AUXILIARES ********** */
+
+// abrirArchivo es una función interna que recibe una ruta y devuelve el archivo.
+// Si ocurre un error al abrirlo devuelve nil.
 func abrirArchivo(ruta string) *os.File {
 	archivo, err := os.Open(ruta)
 	if err != nil {
@@ -134,62 +143,66 @@ func abrirArchivo(ruta string) *os.File {
 	return archivo
 }
 
+// cerrarArchivo cierra el archivo y devuelve un error indicando si se pudo cerrar correctamente
 func cerrarArchivo(archivo *os.File) error {
 	return archivo.Close()
 }
 
+// lecturaDeArchivos recibe un archivo y lo agrega a los registros.
+// Adicionalmente, crea la cola de prioridad de IPs de las que se detectaron ataques DoS.
 func (reg *registros) lecturaDeArchivo(archivo *os.File) TDAColaPrioridad.ColaPrioridad[IPv4] {
 	entrada := bufio.NewScanner(archivo)
-	heap := TDAColaPrioridad.CrearHeap[IPv4](IPCompareInverso)
-	//contador := 0 //revisar: sacar esto
+	colaAtaquesDoS := TDAColaPrioridad.CrearHeap[IPv4](IPCompareInverso) //se usa la función IPCompareInverso para que el heap de máximos funcione como un heap de mínimos.
 	for entrada.Scan() {
 		campos := strings.Split(entrada.Text(), "\t")
 		if len(campos) != _CANTIDAD_CAMPOS_REGISTROS {
 			return nil
 		}
-		//fmt.Printf("%d\t", contador) //revisar: sacar esto
-		//contador++                   //revisar: sacar esto
-		reg.actualizarABBIPs(campos, heap)
+		reg.actualizarDiccionarioIPs(campos, colaAtaquesDoS)
 		reg.actualizarSitiosVisitados(campos[3])
 	}
-	return heap
+	return colaAtaquesDoS
 }
 
-func (reg *registros) actualizarABBIPs(campos []string, heap TDAColaPrioridad.ColaPrioridad[IPv4]) {
+// actualizarABBIPs recibe los campos y la cola de prioridad.
+// Guarda en los registros las IPs, detecta si se realizaron ataques DoS y, de ser el caso, actualiza la cola de prioridad.
+func (reg *registros) actualizarDiccionarioIPs(campos []string, colaAtaquesDoS TDAColaPrioridad.ColaPrioridad[IPv4]) {
 	ip := IPParsear(campos[0])
 	tiempo, _ := time.Parse(time.RFC3339, campos[1])
-	datos := new(datos_diccionario)
-	if !reg.abbIPs.Pertenece(ip) {
+	datos := new(datosDiccionarioIPs)
+	if !reg.diccionarioIPs.Pertenece(ip) {
 		resetearDatos(&datos, reg.registroActual, tiempo)
 	} else {
-		*datos = reg.abbIPs.Obtener(ip)
+		*datos = reg.diccionarioIPs.Obtener(ip)
 		if strings.Compare((*datos).ultimaVisita, reg.registroActual) != 0 {
 			resetearDatos(&datos, reg.registroActual, tiempo)
 		} else if (*datos).ataqueDoSReportado {
 		} else if tiempo.Sub((*datos).tiempo) < _TIME_TO_LIVE {
 			(*datos).visitasDesdeTiempo++
 			if (*datos).visitasDesdeTiempo == _CANTIDAD_LIMITE_ATAQUE_DOS {
-				heap.Encolar(ip)
+				colaAtaquesDoS.Encolar(ip)
 				(*datos).ataqueDoSReportado = true
 			}
 		} else if tiempo.Sub((*datos).tiempo) >= _TIME_TO_LIVE {
 			resetearDatos(&datos, reg.registroActual, tiempo)
 		}
 	}
-	reg.abbIPs.Guardar(ip, *datos)
+	reg.diccionarioIPs.Guardar(ip, *datos)
 }
 
+// actualizarSitiosVisitados recibe un sitio y le suma una visita al mismo en los registros.
 func (reg *registros) actualizarSitiosVisitados(sitio string) {
-	if reg.hashSitiosVisitados.Pertenece(sitio) {
-		cantidad := reg.hashSitiosVisitados.Obtener(sitio)
-		reg.hashSitiosVisitados.Guardar(sitio, cantidad+1)
+	if reg.diccionarioSitiosVisitados.Pertenece(sitio) {
+		cantidad := reg.diccionarioSitiosVisitados.Obtener(sitio)
+		reg.diccionarioSitiosVisitados.Guardar(sitio, cantidad+1)
 	} else {
 		//sitioVisitado := memcopy(sitio) //revisar: me gustaría duplicar la cadena pero no me acuerdo de cómo JAJAJAAJ
-		reg.hashSitiosVisitados.Guardar(sitio, 1)
+		reg.diccionarioSitiosVisitados.Guardar(sitio, 1)
 	}
 }
 
-func resetearDatos(datos **datos_diccionario, log string, t time.Time) {
+// resetearDatos recibe un puntero a un puntero de datosDiccionarioIPs, el registro actual y el tiempo actual y lo resetea.
+func resetearDatos(datos **datosDiccionarioIPs, log string, t time.Time) {
 	(*datos).ultimaVisita = log
 	(*datos).tiempo = t
 	(*datos).visitasDesdeTiempo = 1
