@@ -63,7 +63,7 @@ func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func
 	if nodo != nil {
 		iter.apilarSiguientes(nodo)
 	}
-	
+
 	return iter
 }
 
