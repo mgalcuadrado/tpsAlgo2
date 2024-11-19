@@ -27,8 +27,7 @@ type iteradorExternoRango[K comparable, V any] struct {
 	desde *K
 	hasta *K
 	cmp   func(K, K) int
-	//pila  TDAPila.Pila[*nodoABB[K, V]]
-	cola TDACola.Cola[*nodoABB[K, V]]
+	cola  TDACola.Cola[*nodoABB[K, V]]
 }
 
 type nodoABB[K comparable, V any] struct {
@@ -61,7 +60,7 @@ func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func
 		cmp:   cmp,
 		cola:  TDACola.CrearColaEnlazada[*nodoABB[K, V]](),
 	}
-	iter.iteradorExternoRangov2(raiz)
+	iter.iteradorExterno(raiz)
 	return iter
 }
 
@@ -230,26 +229,13 @@ func (iter *iteradorExternoRango[K, V]) Siguiente() {
 
 /***************Funciones auxiliares iterador externo *************/
 
-func (iter *iteradorExternoRango[K, V]) apilarSiguiente(nodo *nodoABB[K, V]) {
+func (iter *iteradorExternoRango[K, V]) iteradorExterno(nodo *nodoABB[K, V]) {
 	if nodo == nil {
 		return
 	}
-	if iter.desde != nil && iter.cmp(nodo.clave, *(iter.desde)) < 0 {
-		iter.apilarSiguiente(nodo.derecha)
-		return
-	} else if iter.hasta == nil || /*iter.hasta != nil*/ iter.cmp(nodo.clave, *(iter.hasta)) <= 0 {
-		//iter.pila.Apilar(nodo)
-	}
-	iter.apilarSiguiente(nodo.izquierda)
-}
-
-func (iter *iteradorExternoRango[K, V]) iteradorExternoRangov2(nodo *nodoABB[K, V]) {
-	if nodo == nil {
-		return
-	}
-	iter.iteradorExternoRangov2(nodo.izquierda)
+	iter.iteradorExterno(nodo.izquierda)
 	if (iter.desde == nil || iter.cmp(nodo.clave, *(iter.desde)) >= 0) && (iter.hasta == nil || iter.cmp(nodo.clave, *(iter.hasta)) <= 0) {
 		iter.cola.Encolar(nodo)
 	}
-	iter.iteradorExternoRangov2(nodo.derecha)
+	iter.iteradorExterno(nodo.derecha)
 }
