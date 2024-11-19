@@ -61,7 +61,7 @@ func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func
 	nodo := raiz
 
 	if nodo != nil {
-		iter.apilarSiguientes(nodo)
+		iter.apilarSiguiente(nodo)
 	}
 
 	return iter
@@ -231,20 +231,31 @@ func (iter *iteradorExternoRango[K, V]) Siguiente() {
 	if nodo.derecha == nil {
 		return
 	}
-	iter.apilarSiguientes(nodo.derecha)
+	iter.apilarSiguiente(nodo.derecha)
 }
 
 /***************Funciones auxiliares iterador externo *************/
 
-func (iter *iteradorExternoRango[K, V]) apilarSiguientes(nodo *nodoABB[K, V]) {
-	nodoActual := nodo
-	for nodoActual != nil {
-		if iter.desde != nil && iter.cmp(nodoActual.clave, *(iter.desde)) < 0 {
-			iter.apilarSiguientes(nodoActual.derecha)
-			break
-		} else if iter.hasta == nil || (iter.hasta != nil && iter.cmp(nodoActual.clave, *(iter.hasta)) <= 0) {
-			iter.pila.Apilar(nodoActual)
-		}
-		nodoActual = nodoActual.izquierda
+func (iter *iteradorExternoRango[K, V]) apilarSiguiente(nodo *nodoABB[K, V]) {
+	if nodo == nil {
+		return
 	}
+	if iter.desde != nil && iter.cmp(nodo.clave, *(iter.desde)) < 0 {
+		iter.apilarSiguiente(nodo.derecha)
+		return
+	} else if iter.hasta == nil || /*iter.hasta != nil*/ iter.cmp(nodo.clave, *(iter.hasta)) <= 0 {
+		iter.pila.Apilar(nodo)
+	}
+	iter.apilarSiguiente(nodo.izquierda)
+}
+
+func (iter *iteradorExternoRango[K, V]) iteradorExternoRangov2(nodo *nodoABB[K, V]) {
+	if nodo == nil {
+		return
+	}
+	iter.iteradorExternoRangov2(nodo.izquierda)
+	if (iter.desde == nil || iter.cmp(nodo.clave, *(iter.desde)) >= 0) && (iter.hasta == nil || iter.cmp(nodo.clave, *(iter.hasta)) <= 0) {
+		iter.pila.Apilar(nodo)
+	}
+	iter.iteradorExternoRangov2(nodo.derecha)
 }
