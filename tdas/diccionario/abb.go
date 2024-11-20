@@ -1,7 +1,7 @@
 package diccionario
 
 import (
-	TDACola "tdas/cola"
+	TDAPila "tdas/pila"
 )
 
 /*La función de comparación, recibe dos claves y devuelve:
@@ -27,7 +27,7 @@ type iteradorExternoRango[K comparable, V any] struct {
 	desde *K
 	hasta *K
 	cmp   func(K, K) int
-	cola  TDACola.Cola[*nodoABB[K, V]]
+	pila  TDAPila.Pila[*nodoABB[K, V]]
 }
 
 type nodoABB[K comparable, V any] struct {
@@ -58,7 +58,7 @@ func crearIteradorExternoRango[K comparable, V any](desde *K, hasta *K, cmp func
 		desde: desde,
 		hasta: hasta,
 		cmp:   cmp,
-		cola:  TDACola.CrearColaEnlazada[*nodoABB[K, V]](),
+		pila:  TDAPila.CrearPilaDinamica[*nodoABB[K, V]](),
 	}
 	iter.iteradorExterno(raiz)
 	return iter
@@ -207,7 +207,7 @@ func (abb *abb[K, V]) IteradorRango(desde *K, hasta *K) IterDiccionario[K, V] {
 // HaySiguiente devuelve si hay más datos para ver. Esto es, si en el lugar donde se encuentra parado
 // el iterador hay un elemento.
 func (iter *iteradorExternoRango[K, V]) HaySiguiente() bool {
-	return !iter.cola.EstaVacia()
+	return !iter.pila.EstaVacia()
 }
 
 // VerActual devuelve la clave y el dato del elemento actual en el que se encuentra posicionado el iterador.
@@ -216,7 +216,7 @@ func (iter *iteradorExternoRango[K, V]) VerActual() (K, V) {
 	if !iter.HaySiguiente() {
 		panic(_MENSAJE_PANIC_FIN_DE_ITERACION_ABB)
 	}
-	actual := iter.cola.VerPrimero()
+	actual := iter.pila.VerTope()
 	return actual.clave, actual.valor
 }
 
@@ -224,7 +224,7 @@ func (iter *iteradorExternoRango[K, V]) VerActual() (K, V) {
 // entrar en pánico con mensaje 'El iterador termino de iterar'
 func (iter *iteradorExternoRango[K, V]) Siguiente() {
 	iter.VerActual()
-	iter.cola.Desencolar()
+	iter.pila.Desapilar()
 }
 
 /***************Funciones auxiliares iterador externo *************/
@@ -233,9 +233,9 @@ func (iter *iteradorExternoRango[K, V]) iteradorExterno(nodo *nodoABB[K, V]) {
 	if nodo == nil {
 		return
 	}
-	iter.iteradorExterno(nodo.izquierda)
-	if (iter.desde == nil || iter.cmp(nodo.clave, *(iter.desde)) >= 0) && (iter.hasta == nil || iter.cmp(nodo.clave, *(iter.hasta)) <= 0) {
-		iter.cola.Encolar(nodo)
-	}
 	iter.iteradorExterno(nodo.derecha)
+	if (iter.desde == nil || iter.cmp(nodo.clave, *(iter.desde)) >= 0) && (iter.hasta == nil || iter.cmp(nodo.clave, *(iter.hasta)) <= 0) {
+		iter.pila.Apilar(nodo)
+	}
+	iter.iteradorExterno(nodo.izquierda)
 }

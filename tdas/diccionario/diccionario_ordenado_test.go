@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var TAMS_VOLUMEN2 = []int{20, 12500, 25000, 50000, 100000}
+var TAMS_VOLUMEN2 = []int{20, 5000, 12500, 25000, 50000}
 
 func comparacion(v1 int, v2 int) int {
 	if v1 > v2 {
@@ -122,10 +122,10 @@ func BenchmarkABB(b *testing.B) {
 		"ejecutando muchas veces las pruebas para generar un benchmark. Valida que la cantidad " +
 		"sea la adecuada. Luego validamos que podemos obtener y ver si pertenece cada una de las claves generadas, " +
 		"y que luego podemos borrar sin problemas")
-	for _, n := range TAMS_VOLUMEN {
+	for _, n := range TAMS_VOLUMEN2 {
 		b.Run(fmt.Sprintf("Prueba %d elementos", n), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				ejecutarPruebaVolumen(b, n)
+				ejecutarPruebaVolumenABB(b, n)
 			}
 		})
 	}
