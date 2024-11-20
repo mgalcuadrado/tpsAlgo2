@@ -250,7 +250,7 @@ func TestVolumenIteradorRangoCorte(t *testing.T) {
 	}
 	seguirEjecutando := true
 	siguioEjecutandoCuandoNoDebia := false
-	desde, hasta := 1, 7500 //desde era 2500
+	desde, hasta := 1, 7500
 	dic.IterarRango(&desde, &hasta, func(c int, v int) bool {
 		if !seguirEjecutando {
 			siguioEjecutandoCuandoNoDebia = true
