@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	TDACola "tdas/cola"
 	TDAColaPrioridad "tdas/cola_prioridad"
 	TDADiccionario "tdas/diccionario"
 	"time"
@@ -33,9 +34,9 @@ type registros struct {
 
 type datosDiccionarioIPs struct {
 	ultimaVisita       string
-	tiempo             time.Time
 	visitasDesdeTiempo int
 	ataqueDoSReportado bool
+	cola               TDACola.Cola[time.Time]
 }
 
 type sitioVisitado struct {
@@ -48,21 +49,19 @@ type sitioVisitado struct {
 // Devuelve un booleano indicando si la operación se pudo realizar correctamente.
 func (reg *registros) AgregarArchivo(ruta string) bool {
 	archivo := abrirArchivo(ruta)
+	defer archivo.Close()
 	if archivo == nil {
-		cerrarArchivo(archivo)
 		return false
 	}
 	reg.registroActual = ruta
 	colaAtaquesDoS := reg.lecturaDeArchivo(archivo)
 	if colaAtaquesDoS == nil {
-		cerrarArchivo(archivo)
 		return false
 	}
 	for !colaAtaquesDoS.EstaVacia() {
 		ip := colaAtaquesDoS.Desencolar()
-		fmt.Fprintf(os.Stdout, "DoS: %d.%d.%d.%d\n", ip.partes[0], ip.partes[1], ip.partes[2], ip.partes[3])
+		fmt.Fprintf(os.Stdout, "DoS: %s\n", IPDisplay(ip))
 	}
-	cerrarArchivo(archivo)
 	return true
 }
 
@@ -71,7 +70,7 @@ func (reg *registros) AgregarArchivo(ruta string) bool {
 func (reg *registros) VerVisitantes(desde IPv4, hasta IPv4) bool {
 	fmt.Fprintf(os.Stdout, "Visitantes:\n")
 	reg.diccionarioIPs.IterarRango(&desde, &hasta, func(ip IPv4, dato datosDiccionarioIPs) bool {
-		fmt.Fprintf(os.Stdout, "\t%d.%d.%d.%d\n", ip.partes[0], ip.partes[1], ip.partes[2], ip.partes[3])
+		fmt.Fprintf(os.Stdout, "\t%s\n", IPDisplay(ip))
 		return true
 	})
 	return true
@@ -80,20 +79,24 @@ func (reg *registros) VerVisitantes(desde IPv4, hasta IPv4) bool {
 // VerMasVisitados imprime por salida estándar las n páginas más visitadas registradas en el registro.
 // Devuelve un booleano indicando si la operación se pudo realizar correctamente.
 func (reg *registros) VerMasVisitados(n int) bool {
-	colaSitiosVisitados := TDAColaPrioridad.CrearHeap(compararSitiosVisitados)
-	reg.diccionarioSitiosVisitados.Iterar(func(clave string, dato int) bool {
+	arrSitiosVisitados := make([]sitioVisitado, reg.diccionarioSitiosVisitados.Cantidad())
+	contador := 0
+	reg.diccionarioSitiosVisitados.Iterar(func(clave string, dato int) bool { //O(s) para s=cantidad de sitios visitados
 		valor := sitioVisitado{
 			sitio:           clave,
 			cantidadVisitas: dato,
 		}
-		colaSitiosVisitados.Encolar(valor)
+		arrSitiosVisitados[contador] = valor
+		contador++
 		return true
 	})
+	colaSitiosVisitados := TDAColaPrioridad.CrearHeapArr(arrSitiosVisitados, compararSitiosVisitados) //es O(s) crear heap a partir de arreglo
 	fmt.Fprintf(os.Stdout, "Sitios más visitados:\n")
-	for i := 0; i < n && !colaSitiosVisitados.EstaVacia(); i++ {
-		valor := colaSitiosVisitados.Desencolar()
+	for i := 0; i < n && !colaSitiosVisitados.EstaVacia(); i++ { // O(n) * O(log s) = O(n log s)
+		valor := colaSitiosVisitados.Desencolar() //O(log s)
 		fmt.Fprintf(os.Stdout, "\t%s - %d\n", valor.sitio, valor.cantidadVisitas)
 	}
+	//Complejidad final 2 * O(s) +  O(n log s) --> O(s) +  O(n log s)
 	return true
 }
 
@@ -142,11 +145,6 @@ func abrirArchivo(ruta string) *os.File {
 	return archivo
 }
 
-// cerrarArchivo cierra el archivo y devuelve un error indicando si se pudo cerrar correctamente
-func cerrarArchivo(archivo *os.File) error {
-	return archivo.Close()
-}
-
 // lecturaDeArchivos recibe un archivo y lo agrega a los registros.
 // Adicionalmente, crea la cola de prioridad de IPs de las que se detectaron ataques DoS.
 func (reg *registros) lecturaDeArchivo(archivo *os.File) TDAColaPrioridad.ColaPrioridad[IPv4] {
@@ -168,22 +166,26 @@ func (reg *registros) lecturaDeArchivo(archivo *os.File) TDAColaPrioridad.ColaPr
 func (reg *registros) actualizarDiccionarioIPs(campos []string, colaAtaquesDoS TDAColaPrioridad.ColaPrioridad[IPv4]) {
 	ip := IPParsear(campos[0])
 	tiempo, _ := time.Parse(time.RFC3339, campos[1])
-	datos := new(datosDiccionarioIPs)
+	datos := crearDatosDiccionarioIP()
 	if !reg.diccionarioIPs.Pertenece(ip) {
 		resetearDatos(&datos, reg.registroActual, tiempo)
+		reg.diccionarioIPs.Guardar(ip, *datos)
+		return
+	}
+	*datos = reg.diccionarioIPs.Obtener(ip)
+	if strings.Compare((*datos).ultimaVisita, reg.registroActual) != 0 {
+		resetearDatos(&datos, reg.registroActual, tiempo)
+	} else if (*datos).ataqueDoSReportado {
 	} else {
-		*datos = reg.diccionarioIPs.Obtener(ip)
-		if strings.Compare((*datos).ultimaVisita, reg.registroActual) != 0 {
-			resetearDatos(&datos, reg.registroActual, tiempo)
-		} else if (*datos).ataqueDoSReportado {
-		} else if tiempo.Sub((*datos).tiempo) < _TIME_TO_LIVE {
-			(*datos).visitasDesdeTiempo++
-			if (*datos).visitasDesdeTiempo == _CANTIDAD_LIMITE_ATAQUE_DOS {
-				colaAtaquesDoS.Encolar(ip)
-				(*datos).ataqueDoSReportado = true
-			}
-		} else if tiempo.Sub((*datos).tiempo) >= _TIME_TO_LIVE {
-			resetearDatos(&datos, reg.registroActual, tiempo)
+		(*datos).cola.Encolar(tiempo)
+		(*datos).visitasDesdeTiempo++
+		for tiempo.Sub((*datos).cola.VerPrimero()) >= _TIME_TO_LIVE {
+			(*datos).cola.Desencolar()
+			(*datos).visitasDesdeTiempo--
+		}
+		if (*datos).visitasDesdeTiempo == _CANTIDAD_LIMITE_ATAQUE_DOS {
+			colaAtaquesDoS.Encolar(ip)
+			(*datos).ataqueDoSReportado = true
 		}
 	}
 	reg.diccionarioIPs.Guardar(ip, *datos)
@@ -202,12 +204,20 @@ func (reg *registros) actualizarSitiosVisitados(sitio string) {
 // resetearDatos recibe un puntero a un puntero de datosDiccionarioIPs, el registro actual y el tiempo actual y lo resetea.
 func resetearDatos(datos **datosDiccionarioIPs, log string, t time.Time) {
 	(*datos).ultimaVisita = log
-	(*datos).tiempo = t
 	(*datos).visitasDesdeTiempo = 1
 	(*datos).ataqueDoSReportado = false
+	(*datos).cola = TDACola.CrearColaEnlazada[time.Time]() //resetteo la cola
+	(*datos).cola.Encolar(t)
 }
 
 // compararSitiosVisitados devuelve un número menor a cero si s1 < s2, 0 si s1=s2 y un número mayor a cero si s1>s2
 func compararSitiosVisitados(s1 sitioVisitado, s2 sitioVisitado) int {
 	return s1.cantidadVisitas - s2.cantidadVisitas
+}
+
+// crearDatosDiccionarioIP crea la estructura de datosDiccionarioIPs
+func crearDatosDiccionarioIP() *datosDiccionarioIPs {
+	var datos datosDiccionarioIPs
+	datos.cola = TDACola.CrearColaEnlazada[time.Time]()
+	return &datos
 }

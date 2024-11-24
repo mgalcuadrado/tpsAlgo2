@@ -1,8 +1,15 @@
 package registros
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
+)
+
+const (
+	_DELIMITADOR_IPv4      string = "."
+	_BASE_NUMERICA         int    = 10
+	_CANTIDAD_DE_BITS_IPv4 int    = 8
 )
 
 type IPv4 struct {
@@ -13,13 +20,13 @@ type IPv4 struct {
 // como precondicion la cadena debe ser una dirección ipv4
 func IPParsear(cadena string) IPv4 { // O(4) = O(1)
 	direccion := new(IPv4)
-	partes := strings.Split(cadena, ".")
-	for parte, _ := range partes {
-		num, err := strconv.ParseUint(partes[parte], 10, 8)
+	partes := strings.Split(cadena, _DELIMITADOR_IPv4)
+	for indice, _ := range partes {
+		num, err := strconv.ParseUint(partes[indice], _BASE_NUMERICA, _CANTIDAD_DE_BITS_IPv4)
 		if err != nil {
 			panic(_MENSAJE_ERROR)
 		}
-		direccion.partes[parte] = uint8(num)
+		direccion.partes[indice] = uint8(num)
 	}
 	return *direccion
 }
@@ -48,4 +55,8 @@ func IPCompareInverso(ip1 IPv4, ip2 IPv4) int {
 		}
 	}
 	return 0
+}
+
+func IPDisplay(ip IPv4) string {
+	return fmt.Sprintf("%d.%d.%d.%d", ip.partes[0], ip.partes[1], ip.partes[2], ip.partes[3])
 }

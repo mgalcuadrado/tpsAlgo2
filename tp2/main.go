@@ -9,14 +9,8 @@ import (
 )
 
 const (
-	_AGREGAR_ARCHIVO_COMANDO      string = "agregar_archivo"
-	_VER_VISITANTES_COMANDO       string = "ver_visitantes"
-	_VER_MAS_VISITADOS_COMANDO    string = "ver_max_visitados"
-	_AGREGAR_ARCHIVO_PARAMETROS   int    = 2
-	_VER_VISITANTES_PARAMETROS    int    = 3
-	_VER_MAS_VISITADOS_PARAMETROS int    = 2
-	_MENSAJE_ERROR                string = "Error en comando"
-	_MENSAJE_OK                   string = "OK"
+	_MENSAJE_ERROR string = "Error en comando"
+	_MENSAJE_OK    string = "OK"
 )
 
 func main() {
